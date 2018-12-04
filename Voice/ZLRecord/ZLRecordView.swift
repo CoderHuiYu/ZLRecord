@@ -156,7 +156,10 @@ class ZLRecordView: UIView {
     }
     
     func showSliderView() {
+        
+        shimmerView.isHidden = false
         shimmerView.alpha = 1
+        
         leftTipImageView.alpha = 1.0;
         leftTipImageView.isHidden = false
         timeLabel.isHidden = false
@@ -169,19 +172,9 @@ class ZLRecordView: UIView {
         }, completion: nil)
     }
     
-    func hideSliderView() {
-        
-        let shimmerViewFrame = CGRect(x: 100 + kScreenWidth, y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
-        UIView.animate(withDuration: 0.3, animations: {
-            self.shimmerView.frame = shimmerViewFrame
-            self.timeLabel.alpha = 0
-        }) { (success) in
-            self.timeLabel.text = "0:00"
-        }
-    }
-    
     //leftTipImageView layer animation
     func showleftTipImageViewGradient() {
+        
         let basicAnimtion: CABasicAnimation = CABasicAnimation.init(keyPath: "opacity")
         basicAnimtion.repeatCount = MAXFLOAT
         basicAnimtion.duration = 1.0
@@ -262,15 +255,17 @@ class ZLRecordView: UIView {
     
     func resetLeftTipImageView() {
         leftTipImageView.isHidden = true
-        leftTipImageView = UIImageView.init(frame: CGRect.init(x:0, y: self.frame.size.height/2 - 36/2, width: 36, height: 36))
+        leftTipImageView.frame = CGRect.init(x:0, y: self.frame.size.height/2 - 36/2, width: 36, height: 36)
         leftTipImageView.layer.removeAllAnimations()
     }
     
     func resetShimmerView() {
         shimmerView.isHidden = true
-        let shimmerViewFrame = CGRect(x: 100 + kScreenWidth , y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
+        let shimmerViewFrame = CGRect(x: 100 , y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
         self.shimmerView.frame = shimmerViewFrame
+        
         let zlSlideView = shimmerView.contentView as! ZLSlideView
+        zlSlideView.resetFrame()
         zlSlideView.resetShowLableText()
     }
     
@@ -331,6 +326,7 @@ class ZLRecordView: UIView {
 
         
         resetRecordButtonTarget()
+        
         resetFinishStatusView()
 //        let zlSliderView : ZLSlideView = self.shimmerView.contentView as! ZLSlideView
 //        zlSliderView.resetFrame()
@@ -356,6 +352,7 @@ extension ZLRecordView {
         
         //4.d
         startRecord()
+        
         showleftTipImageViewGradient()
     }
     
