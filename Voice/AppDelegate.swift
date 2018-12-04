@@ -1,9 +1,9 @@
 //
 //  AppDelegate.swift
-//  ZLRecord
+//  Voice
 //
-//  Created by 余辉 on 2018/12/4.
-//  Copyright © 2018年 Sinowel. All rights reserved.
+//  Created by Tyoung on 2018/11/27.
+//  Copyright © 2018 Tyoung. All rights reserved.
 //
 
 import UIKit
