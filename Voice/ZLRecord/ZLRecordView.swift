@@ -145,6 +145,7 @@ class ZLRecordView: UIView {
     //MARK: == show view and animation
     func showLockView()  {
         lockView.isHidden = false
+        lockView.lockAnimationView.addAnimation()
         UIView.animate(withDuration: 0.3, animations: {
             let originFrame = self.lockView.frame
             let lockViewFrame = CGRect.init(x:originFrame.origin.x, y: -originFrame.height+30, width: originFrame.size.width, height: originFrame.size.height)
@@ -252,6 +253,13 @@ class ZLRecordView: UIView {
         }
     }
     
+    func resetLockView() {
+        self.lockView.layer.removeAllAnimations()
+        self.lockView.isHidden = true
+        let originFrame = CGRect.init(x: self.frame.size.width-kFloatLockViewWidth, y: 0, width: kFloatLockViewWidth, height: kFloatLockViewHeight)
+        self.lockView.frame = originFrame;
+    }
+    
     //MARK: == cancel the record
     // cancle record
     func recordCanceled() {
@@ -280,15 +288,14 @@ class ZLRecordView: UIView {
     
     //ended record
     func recordEnded()  {
+        
+        recorder?.stop()
+        playTimer?.invalidate()
+        playTimer = nil
+        
         hideSliderView()
-        UIView.animate(withDuration: 0.5, animations: {
-            
-           }) { (finish) in
-            self.lockView.isHidden = true
-            let originFrame = CGRect.init(x: self.frame.size.width-kFloatLockViewWidth, y: 0, width: kFloatLockViewWidth, height: kFloatLockViewHeight)
-            self.lockView.frame = originFrame;
-
-        }
+        
+        resetLockView()
         
         resetRecordButtonTarget()
         
@@ -297,6 +304,7 @@ class ZLRecordView: UIView {
     }
     
 }
+
 
   //MARK: == handle : click the recordButton and it's status
 extension ZLRecordView {
@@ -343,37 +351,42 @@ extension ZLRecordView {
             return
         }
         
-        guard lockView.isHidden else {
+        guard lockView.isHidden == false else {
             trackTouchPoint = curPoint
             return
         }
-
+        
         let changeY = trackTouchPoint!.y - curPoint!.y
-        print(changeY)
+        print("changeY\(changeY)")
         if changeY > 0{
             var originFrame = self.lockView.frame
             originFrame.origin.y -= changeY
             originFrame.size.height -= changeY
             if originFrame.size.height > kFloatLockViewWidth + 5 {
                 lockView.frame = originFrame;
-               
+                lockView.lockAnimationView.arrowImageView.alpha = 0.7 * (kFloatLockViewWidth / (kFloatLockViewWidth + 5))
             }else {
                 //lock animation
+                lockView.lockAnimationView.arrowImageView.alpha = 0
                 senderA.removeTarget(nil, action: nil, for: UIControl.Event.allEvents)
                 shimmerView.isShimmering = false
                 zlSliderView.changeStatus()
                 originFrame.size = CGSize.init(width: kFloatLockViewWidth, height: kFloatLockViewWidth)
                 lockView.frame = originFrame;
                 lockView.addBoundsAnimation()
+                DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + (kBoundsAnimationDuration * 3)) {
+                    self.resetLockView()
+                }
             }
-        } else{
+        }else {
             var originFrame = self.lockView.frame
             originFrame.origin.y -= changeY
             originFrame.size.height -= changeY
             if originFrame.size.height <= kFloatLockViewHeight {
-                self.lockView.frame = originFrame;
+                resetLockView()
             }
         }
+        
         trackTouchPoint = curPoint
     }
     
@@ -406,7 +419,7 @@ extension ZLRecordView {
     // is recording
     func recordIsRecordingVoice(_ recordTime: Int) {
         timeCount = recordTime
-        if (timeCount == 1) && (lockView.isHidden) {
+        if (timeCount == 1){
             showLockView()
         }
         if recordTime < 10 {

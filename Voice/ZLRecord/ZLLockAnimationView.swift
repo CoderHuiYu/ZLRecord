@@ -12,7 +12,7 @@ let kCATransformScale = "transform.scale"
 
 let kStartY : CGFloat = 10.0
 class ZLLockAnimationView: UIView {
-
+    
     lazy  var  lockHead : UIImageView  = {
         let width = frame.size.width
         let lockHead = UIImageView.init(frame: CGRect.init(x: (width - 11.5)/2, y: kStartY, width: 11.5, height: 9))
@@ -32,7 +32,7 @@ class ZLLockAnimationView: UIView {
     }()
     
     lazy var arrowImageView : UIImageView = {
-          let width = frame.size.width
+        let width = frame.size.width
         let arrowImageView = UIImageView.init(frame: CGRect.init(x: (width - 11.5)/2, y: kStartY+7+9+7, width: 11.5, height: 9))
         arrowImageView.image = UIImage.init(named: "ic_ptt_lock_arrow")
         arrowImageView.layer.add(animationPosition(2, 0, 0.8), forKey: kCATranslationY)
@@ -58,6 +58,11 @@ class ZLLockAnimationView: UIView {
         addSubview(arrowImageView)
     }
     
+    func addAnimation ()  {
+        lockHead.layer.add(animationPosition(0, 2, 0.8), forKey: kCATranslationY)
+        lockBody.layer.add(animationPosition(2, 1, 0.8), forKey: kCATranslationY)
+        arrowImageView.layer.add(animationPosition(2, 0, 0.8), forKey: kCATranslationY)
+    }
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
