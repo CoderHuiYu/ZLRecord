@@ -51,5 +51,17 @@ class ZLLockView: UIView {
         
     }
     
+    func resetLockViewImageTint() {
+        
+        lockAnimationView.addAnimation()
+        lockAnimationView.lockHead.image = UIImage.init(named: "ic_ptt_lock_shackle")
+        lockAnimationView.lockBody.image = UIImage.init(named: "ic_ptt_lock_body")
+        
+        var lockHeadFrame = lockAnimationView.lockHead.frame
+        lockHeadFrame.origin.y = kStartY
+        lockAnimationView.lockHead.frame = lockHeadFrame
+        
+    }
+    
 }
 
