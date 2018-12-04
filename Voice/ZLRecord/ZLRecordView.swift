@@ -66,9 +66,9 @@ class ZLRecordView: UIView {
     }()
     
     lazy var recordButton: UIButton = {
-        let recordButton = UIButton.init(frame: CGRect(x: frame.size.width-self.frame.size.height, y: 0, width: self.frame.size.height, height: self.frame.size.height))
-        recordButton.backgroundColor = UIColor.orange
-        recordButton.setImage(UIImage.init(named: "button_mic_white"), for:UIControl.State.normal)
+        let recordButton = UIButton.init(frame: CGRect(x: frame.size.width-self.frame.size.height, y: 0, width: self.frame.size.height, height: self.frame.size.height))        
+        recordButton.backgroundColor = self.backgroundColor
+        recordButton.setImage(UIImage.init(named: "MicRecBtn"), for:UIControl.State.normal)
         recordButton.addTarget(self, action: #selector(recordStartRecordVoice(sender:event:)), for: .touchDown)
         recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragInside)
         recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragOutside)
@@ -79,7 +79,7 @@ class ZLRecordView: UIView {
     }()
     
     func resetRecordButtonTarget() {
-        recordButton.setImage(UIImage.init(named: "ButtonMic7"), for:UIControl.State.normal)
+        recordButton.setImage(UIImage.init(named: "button_mic_white"), for:UIControl.State.normal)
         recordButton.addTarget(self, action: #selector(recordStartRecordVoice(sender:event:)), for: .touchDown)
         recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragInside)
         recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragOutside)
@@ -90,8 +90,8 @@ class ZLRecordView: UIView {
     }
     
     lazy var leftTipImageView : UIImageView  = {
-        let leftTipImageView = UIImageView.init(frame: CGRect.init(x:0, y: self.frame.size.height/2 - 36/2, width: 36, height: 36))
-        let image = UIImage.init(named: "ButtonMic7")?.imageWithTintColor(color: UIColor.red)
+        let leftTipImageView = UIImageView.init(frame: CGRect.init(x:0, y: self.frame.size.height/2 - 28/2, width: 28 , height: 28))
+        let image = UIImage.init(named: "button_mic_white")?.imageWithTintColor(color: UIColor.red)
         leftTipImageView.image = image
         leftTipImageView.contentMode = .scaleAspectFit
         leftTipImageView.isHidden = true
@@ -121,6 +121,7 @@ class ZLRecordView: UIView {
         lockView.layer.borderColor = UIColor.init(red: 200/255.0, green:  200/255.0, blue:  200/255.0, alpha: 1).cgColor
         lockView.layer.cornerRadius = kFloatLockViewWidth / 2
         lockView.layer.masksToBounds = true
+        lockView.isHidden = true
         return lockView
     }()
     
@@ -128,12 +129,12 @@ class ZLRecordView: UIView {
         super.init(frame: frame)
         isUserInteractionEnabled = true
         backgroundColor = UIColor.init(displayP3Red: 200/255.0, green: 200/255.0, blue: 200/255.0, alpha: 1)
+        insertSubview(lockView, belowSubview: recordButton)
         addSubview(shimmerView)
         addSubview(placeholdLabel)
         addSubview(leftTipImageView)
         addSubview(garbageView)
         addSubview(timeLabel)
-        insertSubview(lockView, belowSubview: recordButton)
         addSubview(recordButton)
 
     }
@@ -254,13 +255,13 @@ class ZLRecordView: UIView {
     
     func resetLeftTipImageView() {
         leftTipImageView.isHidden = true
-        leftTipImageView.frame = CGRect.init(x:0, y: self.frame.size.height/2 - 36/2, width: 36, height: 36)
+        leftTipImageView.frame = CGRect.init(x:0, y: self.frame.size.height/2 - 28/2, width: 28, height: 28)
         leftTipImageView.layer.removeAllAnimations()
     }
     
     func resetShimmerView() {
         shimmerView.isHidden = true
-        let shimmerViewFrame = CGRect(x: 100 , y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
+        let shimmerViewFrame = CGRect(x: 100 + kScreenWidth , y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
         self.shimmerView.frame = shimmerViewFrame
         
         let zlSlideView = shimmerView.contentView as! ZLSlideView
