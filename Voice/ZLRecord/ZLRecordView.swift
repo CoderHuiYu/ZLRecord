@@ -40,11 +40,11 @@ class ZLRecordView: UIView {
     
     var trackTouchPoint : CGPoint?
     var firstTouchPoint : CGPoint?
-    var isCanceling : Bool = false      //is canceling
+    var isCanceled : Bool = false      //is canceling
     var timeCount : Int = 0
     
     
-    
+    //MARK: == init the view
     lazy var placeholdLabel : UILabel = {
         let placeholdLabel = UILabel.init(frame: CGRect.init(x: 0, y: 0, width: 40, height: self.frame.height))
         placeholdLabel.backgroundColor = self.backgroundColor
@@ -78,6 +78,17 @@ class ZLRecordView: UIView {
         recordButton.addTarget(self, action: #selector(recordFinishRecordVoice), for: .touchUpOutside)
         return recordButton
     }()
+    
+    func resetRecordButtonTarget() {
+        recordButton.setImage(UIImage.init(named: "ButtonMic7"), for:UIControl.State.normal)
+        recordButton.addTarget(self, action: #selector(recordStartRecordVoice(sender:event:)), for: .touchDown)
+        recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragInside)
+        recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragOutside)
+        
+        recordButton.addTarget(self, action: #selector(recordFinishRecordVoice), for: .touchUpInside)
+        recordButton.addTarget(self, action: #selector(recordFinishRecordVoice), for: .touchCancel)
+        recordButton.addTarget(self, action: #selector(recordFinishRecordVoice), for: .touchUpOutside)
+    }
     
     lazy var leftTipImageView : UIImageView  = {
         let leftTipImageView = UIImageView.init(frame: CGRect.init(x:0, y: self.frame.size.height/2 - 36/2, width: 36, height: 36))
@@ -133,6 +144,7 @@ class ZLRecordView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
    
+    //MARK: == show view and animation
     func showLockView()  {
         lockView.isHidden = false
         UIView.animate(withDuration: 0.3, animations: {
@@ -236,38 +248,39 @@ class ZLRecordView: UIView {
             self.leftTipImageView.isHidden = true
             self.garbageView.frame = CGRect.init(x: self.leftTipImageView.center.x - 15/2, y: 45, width: 30, height: self.frame.height)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
-                 self.endRecord()
+                 self.recordEnded()
             })
         }
     }
     
-
-    //sure will cancle
-    func cancled() {
-        
-        isCanceling = true
-      
+    //MARK: == cancel the record
+    // cancle record
+    func recordCanceled() {
+        isCanceled = true
         self.timeCount = 0
-//        self.leftTipImageView.layer.removeAllAnimations()
         
-        //notict voiceButton to stop and delete record
-        cancledRecord()
+        //record stoped and delete the record
+        if (playTimer != nil) {
+            recorder?.stop()
+            recorder?.deleteRecording()
+            playTimer?.invalidate()
+            playTimer = nil
+        }
         
         //show animation
         showLeftTipImageViewAnimation()
         
         //notice delegate
-       
         guard let delegate = delegate else {
             return
         }
-        if let res = delegate.zlRecordCanceledRecordVoice {
-            res()
+        if let noticeCancelRecord = delegate.zlRecordCanceledRecordVoice {
+            noticeCancelRecord()
         }
     }
     
-    //reset View contains:frame and layer animation
-    func endRecord()  {
+    //ended record
+    func recordEnded()  {
         hideSliderView()
         UIView.animate(withDuration: 0.5, animations: {
             
@@ -278,18 +291,134 @@ class ZLRecordView: UIView {
 
         }
         
-//        placeholdLabel.removeFromSuperview()
-//        garbageView.removeFromSuperview()
-//        leftTipImageView.layer.removeAllAnimations()
-//        leftTipImageView.removeFromSuperview()
-//        shimmerView.removeFromSuperview()
+        resetRecordButtonTarget()
+        
         let zlSliderView : ZLSlideView = self.shimmerView.contentView as! ZLSlideView
         zlSliderView.resetFrame()
     }
     
-    func didBeginRecord() {
-        print("didBeginRecord")
-        isCanceling = false
+}
+
+  //MARK: == handle : click the recordButton and it's status
+extension ZLRecordView {
+    
+    // 0 start record
+    @objc func recordStartRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
+        //0.addSubview and hide garbageView
+        
+        //2.get the trackPoint
+        let touch : UITouch = (eventA.touches(for: senderA)?.first)!
+        trackTouchPoint = touch.location(in: self)
+        firstTouchPoint = trackTouchPoint;
+        isCanceled = false;
+        //3.start execut the animation
+        showSliderView()
+        
+        //4.d
+        startRecord()
+        showleftTipImageViewGradient()
+    }
+    
+    //1. recordMayCancel
+    @objc func recordMayCancelRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
+        
+        let touch = eventA.touches(for: senderA)?.first
+        let curPoint = touch?.location(in: self)
+        guard curPoint != nil else {
+            return
+        }
+        let zlSliderView : ZLSlideView = self.shimmerView.contentView as! ZLSlideView
+        if curPoint!.x < recordButton.frame.origin.x {
+            zlSliderView.updateLocation(curPoint!.x - self.trackTouchPoint!.x)
+        }
+       
+        if (firstTouchPoint!.x - trackTouchPoint!.x) > kFloatCancelRecordingOffsetX {
+            senderA.cancelTracking(with: eventA)
+            senderA.removeTarget(nil, action: nil, for: UIControl.Event.allEvents)
+            self.recordCanceled()
+        }
+        
+        guard timeCount >= 1 else {
+            trackTouchPoint = curPoint
+            return
+        }
+        
+        guard lockView.isHidden else {
+            trackTouchPoint = curPoint
+            return
+        }
+
+        let changeY = trackTouchPoint!.y - curPoint!.y
+        print(changeY)
+        if changeY > 0{
+            var originFrame = self.lockView.frame
+            originFrame.origin.y -= changeY
+            originFrame.size.height -= changeY
+            if originFrame.size.height > kFloatLockViewWidth + 5 {
+                lockView.frame = originFrame;
+               
+            }else {
+                //lock animation
+                senderA.removeTarget(nil, action: nil, for: UIControl.Event.allEvents)
+                shimmerView.isShimmering = false
+                zlSliderView.changeStatus()
+                originFrame.size = CGSize.init(width: kFloatLockViewWidth, height: kFloatLockViewWidth)
+                lockView.frame = originFrame;
+                lockView.addBoundsAnimation()
+            }
+        } else{
+            var originFrame = self.lockView.frame
+            originFrame.origin.y -= changeY
+            originFrame.size.height -= changeY
+            if originFrame.size.height <= kFloatLockViewHeight {
+                self.lockView.frame = originFrame;
+            }
+        }
+        trackTouchPoint = curPoint
+    }
+    
+    
+    //3.finish Record Voice
+    @objc func recordFinishRecordVoice(){
+        guard isCanceled  == false else {
+            return
+        }
+        print("~~~~~~~recordFinish-----1")
+        recorder?.stop()
+        playTimer?.invalidate()
+        playTimer = nil
+        
+        recordEnded()
+        isFinished = true
+    }
+    
+   
+    //MARK: == handle recodr voice
+    
+    @objc private func countVoiceTime(){
+        playTime = playTime + 1
+        recordIsRecordingVoice(playTime)
+        if playTime >= 60 {
+            recordFinishRecordVoice()
+        }
+        print("~~~~~~~\(playTime)")
+    }
+    // is recording
+    func recordIsRecordingVoice(_ recordTime: Int) {
+        timeCount = recordTime
+        if (timeCount == 1) && (lockView.isHidden) {
+            showLockView()
+        }
+        if recordTime < 10 {
+            self.timeLabel.text = "0:0" + "\(recordTime)"
+        }else{
+            self.timeLabel.text = "0:" + "\(recordTime)"
+        }
+    }
+    
+    func startRecord() {
+        print("startRecord")
+        isCanceled = false
         playTime = 0
         let audioSession = AVAudioSession.sharedInstance()
         do {
@@ -328,154 +457,15 @@ class ZLRecordView: UIView {
         RunLoop.main.add(playTimer!, forMode: RunLoop.Mode.default)
     }
     
-    //finish Record Voice
-    @objc func recordFinishRecordVoice(){
-        guard isCanceling  == false else {
-            return
-        }
-        print("~~~~~~~recordFinish-----1")
-        recorder?.stop()
-        playTimer?.invalidate()
-        playTimer = nil
-
-        print("recordFinish-----2")
-        endRecord()
-        isFinished = true
-    }
-    
-    @objc private func countVoiceTime(){
-        playTime = playTime + 1
-        recordIsRecordingVoice(playTime)
-        if playTime >= 60 {
-            recordFinishRecordVoice()
-        }
-        print("~~~~~~~\(playTime)")
-    }
-    
-    func cancledRecord() {
-        print("~~~~~~~recordCanceled～～")
-        if (playTimer != nil) {
-            recorder?.stop()
-            recorder?.deleteRecording()
-            playTimer?.invalidate()
-            playTimer = nil
-        }
-    }
-    
+   
 }
 
-extension ZLRecordView : ZLSlideViewProtocol{
-    func cancelRecordVoice() {
-        cancled()
-    }
-}
-
-extension ZLRecordView {
-    
-    
-    @objc func prepareForRecord()  {
-        didBeginRecord()
-        addSubview(timeLabel)
-        showleftTipImageViewGradient()
-    }
-    
-    // is recording
-    func recordIsRecordingVoice(_ recordTime: Int) {
-        timeCount = recordTime
-        if (timeCount == 1) && (lockView.isHidden) {
-            showLockView()
-        }
-        if recordTime < 10 {
-            self.timeLabel.text = "0:0" + "\(recordTime)"
-        }else{
-            self.timeLabel.text = "0:" + "\(recordTime)"
-        }
-    }
-    
-    // start record
-    @objc func recordStartRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
-        //0.addSubview and hide garbageView
-        
-        //2.get the trackPoint
-        let touch : UITouch = (eventA.touches(for: senderA)?.first)!
-        trackTouchPoint = touch.location(in: self)
-        firstTouchPoint = trackTouchPoint;
-        isCanceling = false;
-        //3.start execut the animation
-        showSliderView()
-        
-        //4.delay
-        didBeginRecord()
-        showleftTipImageViewGradient()
-        //        perform(#selector(prepareForRecord), with: nil, afterDelay: 1)
-    }
-
-    
-    // recordMayCancel
-    @objc func recordMayCancelRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
-        
-        let touch = eventA.touches(for: senderA)?.first
-        let curPoint = touch?.location(in: self)
-        guard curPoint != nil else {
-            return
-        }
-        let zlSliderView : ZLSlideView = self.shimmerView.contentView as! ZLSlideView
-        if curPoint!.x < recordButton.frame.origin.x {
-            zlSliderView.updateLocation(curPoint!.x - self.trackTouchPoint!.x)
-        }
-       
-        if (firstTouchPoint!.x - trackTouchPoint!.x) > kFloatCancelRecordingOffsetX {
-            senderA.cancelTracking(with: eventA)
-//            senderA.removeTarget(nil, action: nil, for: UIControl.Event.allEvents)
-            self.cancled()
-        }
-        
-        guard timeCount >= 1 else {
-            trackTouchPoint = curPoint
-            return
-        }
-        
-        guard lockView.isHidden else {
-            trackTouchPoint = curPoint
-            return
-        }
-
-        let changeY = trackTouchPoint!.y - curPoint!.y
-        print(changeY)
-        if changeY > 0{
-            var originFrame = self.lockView.frame
-            originFrame.origin.y -= changeY
-            originFrame.size.height -= changeY
-            if originFrame.size.height > kFloatLockViewWidth + 5 {
-                lockView.frame = originFrame;
-               
-            }else {
-                //lock animation
-//                senderA.removeTarget(nil, action: nil, for: UIControl.Event.allEvents)
-                shimmerView.isShimmering = false
-                zlSliderView.changeStatus()
-                originFrame.size = CGSize.init(width: kFloatLockViewWidth, height: kFloatLockViewWidth)
-                lockView.frame = originFrame;
-                lockView.addBoundsAnimation()
-            }
-        } else{
-            var originFrame = self.lockView.frame
-            originFrame.origin.y -= changeY
-            originFrame.size.height -= changeY
-            if originFrame.size.height <= kFloatLockViewHeight {
-                self.lockView.frame = originFrame;
-            }
-        }
-        trackTouchPoint = curPoint
-    }
-    
-}
 extension ZLRecordView: AVAudioRecorderDelegate{
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         let url = NSURL.fileURL(withPath: docmentFilePath!)
         do{
             let audioData = try  NSData(contentsOfFile: url.path, options: [])
-            if isFinished && (isCanceling == false) && (timeCount >= 1) {
+            if isFinished && (isCanceled == false) && (timeCount >= 1) {
                 isFinished = false
                 timeCount = 0
                 self.delegate?.zlRecordFinishRecordVoice(didFinishRecode: audioData)
@@ -483,5 +473,11 @@ extension ZLRecordView: AVAudioRecorderDelegate{
         } catch let err{
             print("record fail:\(err.localizedDescription)")
         }
+    }
+}
+
+extension ZLRecordView : ZLSlideViewProtocol{
+    func cancelRecordVoice() {
+        recordCanceled()
     }
 }
