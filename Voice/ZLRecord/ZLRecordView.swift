@@ -157,14 +157,14 @@ class ZLRecordView: UIView {
     
     func showSliderView() {
         shimmerView.alpha = 1
+        leftTipImageView.alpha = 1.0;
         leftTipImageView.isHidden = false
-        let shimmerViewFrame = CGRect(x: 100, y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
-        self.leftTipImageView.alpha = 1.0;
-//        let tipFrame = CGRect(x: 0, y: self.frame.size.height/2 - 36/2, width: 36, height: 36)
+        timeLabel.isHidden = false
         
-        UIView.animate(withDuration: 0.3, delay: 0.0, options: UIView.AnimationOptions.curveLinear, animations: {
+        let shimmerViewFrame = CGRect(x: 100, y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
+        
+        UIView.animate(withDuration: 0.5, delay: 0.0, options: UIView.AnimationOptions.curveLinear, animations: {
             self.shimmerView.frame = shimmerViewFrame
-//            self.leftTipImageView.frame = tipFrame
             self.timeLabel.alpha = 1
         }, completion: nil)
     }
@@ -230,6 +230,7 @@ class ZLRecordView: UIView {
                 }) { (finish) in
                     self.leftTipImageView.transform = CGAffineTransform.identity
                     self.dismissGarbage()
+                    self.resetCancelStatusView()
                 }
             }
         }
@@ -247,47 +248,50 @@ class ZLRecordView: UIView {
             self.garbageView.isHidden = true
             self.leftTipImageView.isHidden = true
             self.garbageView.frame = CGRect.init(x: self.leftTipImageView.center.x - 15/2, y: 45, width: 30, height: self.frame.height)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
-                 self.recordEnded()
-            })
+         
         }
     }
     
     func resetLockView() {
-        self.lockView.layer.removeAllAnimations()
-        self.lockView.isHidden = true
+        lockView.isHidden = true
+        lockView.lockAnimationView.layer.removeAllAnimations()
+        lockView.layer.removeAllAnimations()
         let originFrame = CGRect.init(x: self.frame.size.width-kFloatLockViewWidth, y: 0, width: kFloatLockViewWidth, height: kFloatLockViewHeight)
-        self.lockView.frame = originFrame;
+        lockView.frame = originFrame;
     }
     
     func resetLeftTipImageView() {
         leftTipImageView.isHidden = true
         leftTipImageView = UIImageView.init(frame: CGRect.init(x:0, y: self.frame.size.height/2 - 36/2, width: 36, height: 36))
+        leftTipImageView.layer.removeAllAnimations()
     }
     
     func resetShimmerView() {
-        let shimmerViewFrame = CGRect(x: 100, y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
-        UIView.animate(withDuration: 0.3, delay: 0.0, options: UIView.AnimationOptions.curveLinear, animations: {
-            self.shimmerView.frame = shimmerViewFrame
-        }, completion: nil)
-        
+        shimmerView.isHidden = true
+        let shimmerViewFrame = CGRect(x: 100 + kScreenWidth , y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
+        self.shimmerView.frame = shimmerViewFrame
+        let zlSlideView = shimmerView.contentView as! ZLSlideView
+        zlSlideView.resetShowLableText()
     }
     
     func resetTimeLabel() {
-        
-        
-        
+        timeLabel.isHidden = true
+        timeLabel.text = "0:00"
     }
     
-    func resetAllView() {
-        
-        
-        
+    
+    
+    func resetFinishStatusView() {
+        resetLeftTipImageView()
+        resetShimmerView()
+        resetTimeLabel()
+        resetLockView()
     }
     
-    func resetCancelView() {
-        
-        
+    func resetCancelStatusView() {
+        resetLockView()
+        resetTimeLabel()
+        resetShimmerView()
         
     }
     
@@ -304,7 +308,8 @@ class ZLRecordView: UIView {
             playTimer?.invalidate()
             playTimer = nil
         }
-        
+        resetRecordButtonTarget()
+
         //show animation
         showLeftTipImageViewAnimation()
         
@@ -323,15 +328,12 @@ class ZLRecordView: UIView {
         recorder?.stop()
         playTimer?.invalidate()
         playTimer = nil
-        
-        hideSliderView()
-        
-        resetLockView()
+
         
         resetRecordButtonTarget()
-        
-        let zlSliderView : ZLSlideView = self.shimmerView.contentView as! ZLSlideView
-        zlSliderView.resetFrame()
+        resetFinishStatusView()
+//        let zlSliderView : ZLSlideView = self.shimmerView.contentView as! ZLSlideView
+//        zlSliderView.resetFrame()
     }
     
 }

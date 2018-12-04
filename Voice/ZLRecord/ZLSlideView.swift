@@ -77,6 +77,14 @@ class ZLSlideView: UIView {
         showLabel.addGestureRecognizer(tap)
     }
     
+    func resetShowLableText() {
+        showLabel.text = "滑动来取消"
+        showLabel.font = UIFont.systemFont(ofSize: 16)
+        showLabel.textColor = UIColor.init(red: 20/255.0, green: 20/255.0, blue: 20/255.0, alpha: 1)
+        showLabel.textAlignment = NSTextAlignment.center
+        showLabel.isUserInteractionEnabled = false
+    }
+    
     @objc func canelRecord() {
         guard let delegate = delegate else {return}
         delegate.cancelRecordVoice()
