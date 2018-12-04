@@ -247,7 +247,8 @@ class ZLRecordView: UIView {
     
     func resetLockView() {
         lockView.isHidden = true
-        lockView.lockAnimationView.layer.removeAllAnimations()
+        
+        lockView.resetLockViewImageTint()
         lockView.layer.removeAllAnimations()
         let originFrame = CGRect.init(x: self.frame.size.width-kFloatLockViewWidth, y: 0, width: kFloatLockViewWidth, height: kFloatLockViewHeight)
         lockView.frame = originFrame;
