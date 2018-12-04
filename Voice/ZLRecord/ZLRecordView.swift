@@ -40,7 +40,7 @@ class ZLRecordView: UIView {
     
     var trackTouchPoint : CGPoint?
     var firstTouchPoint : CGPoint?
-    var isCanceled : Bool = false      //is canceling
+    var isCanceled : Bool = false      //is canceled
     var timeCount : Int = 0
     
     
@@ -146,7 +146,7 @@ class ZLRecordView: UIView {
     func showLockView()  {
         lockView.isHidden = false
         lockView.lockAnimationView.addAnimation()
-        UIView.animate(withDuration: 0.3, animations: {
+        UIView.animate(withDuration: 0.5, animations: {
             let originFrame = self.lockView.frame
             let lockViewFrame = CGRect.init(x:originFrame.origin.x, y: -originFrame.height+30, width: originFrame.size.width, height: originFrame.size.height)
             self.lockView.frame = lockViewFrame;
@@ -389,7 +389,7 @@ extension ZLRecordView {
         
         let changeY = trackTouchPoint!.y - curPoint!.y
         print("changeY\(changeY)")
-        if changeY > 0{
+        if changeY >= 0{
             var originFrame = self.lockView.frame
             originFrame.origin.y -= changeY
             originFrame.size.height -= changeY
@@ -414,7 +414,7 @@ extension ZLRecordView {
             originFrame.origin.y -= changeY
             originFrame.size.height -= changeY
             if originFrame.size.height <= kFloatLockViewHeight {
-                resetLockView()
+                self.lockView.frame = originFrame;
             }
         }
         
