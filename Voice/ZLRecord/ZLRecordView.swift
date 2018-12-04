@@ -221,6 +221,7 @@ class ZLRecordView: UIView {
 
                 }) { (finish) in
                     self.leftTipImageView.transform = CGAffineTransform.identity
+                    self.leftTipImageView.isHidden = true
                     self.dismissGarbage()
                 }
             }
@@ -507,7 +508,7 @@ extension ZLRecordView {
         if playTimer == nil {
             playTimer = Timer.init(timeInterval: 1, target: self, selector: #selector(countVoiceTime), userInfo: nil, repeats: true)
         }
-        RunLoop.main.add(playTimer!, forMode: RunLoop.Mode.default)
+        RunLoop.main.add(playTimer!, forMode: RunLoop.Mode.common)
     }
     
    
@@ -531,6 +532,15 @@ extension ZLRecordView: AVAudioRecorderDelegate{
 
 extension ZLRecordView : ZLSlideViewProtocol{
     func cancelRecordVoice() {
+       
+//        let basicAnimtion: CABasicAnimation = CABasicAnimation.init(keyPath: "opacity")
+//        basicAnimtion.duration = 1.0
+//        basicAnimtion.fromValue = 1.0
+//        basicAnimtion.toValue = 0
+//        basicAnimtion.isRemovedOnCompletion = false
+//        let zlsiderView = shimmerView.contentView as! ZLSlideView
+//        zlsiderView.layer.add(basicAnimtion, forKey: "basicAnimtion")
+
         recordCanceled()
     }
 }
