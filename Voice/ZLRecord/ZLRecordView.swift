@@ -110,7 +110,7 @@ class ZLRecordView: UIView {
         timeLabel.backgroundColor = self.backgroundColor
         timeLabel.text = "0:00"
         timeLabel.font = UIFont.systemFont(ofSize: 18)
-        timeLabel.alpha = 0
+        timeLabel.isHidden = true
         return timeLabel
     }()
     
@@ -168,7 +168,6 @@ class ZLRecordView: UIView {
         
         UIView.animate(withDuration: 0.5, delay: 0.0, options: UIView.AnimationOptions.curveLinear, animations: {
             self.shimmerView.frame = shimmerViewFrame
-            self.timeLabel.alpha = 1
         }, completion: nil)
     }
     
@@ -219,11 +218,10 @@ class ZLRecordView: UIView {
                 
                 UIView.animate(withDuration: kFloatRecordImageDownTime, delay: 0.0, options: UIView.AnimationOptions.curveEaseInOut, animations: {
                     self.leftTipImageView.frame = orgFrame
-                    self.leftTipImageView.alpha = 0.1
+
                 }) { (finish) in
                     self.leftTipImageView.transform = CGAffineTransform.identity
                     self.dismissGarbage()
-                    self.resetCancelStatusView()
                 }
             }
         }
@@ -241,7 +239,8 @@ class ZLRecordView: UIView {
             self.garbageView.isHidden = true
             self.leftTipImageView.isHidden = true
             self.garbageView.frame = CGRect.init(x: self.leftTipImageView.center.x - 15/2, y: 45, width: 30, height: self.frame.height)
-         
+            
+            self.resetCancelStatusView()         
         }
     }
     
@@ -294,6 +293,7 @@ class ZLRecordView: UIView {
     // cancle record
     func recordCanceled() {
         isCanceled = true
+        print("isCanceled")
         self.timeCount = 0
         
         //record stoped and delete the record
@@ -303,6 +303,7 @@ class ZLRecordView: UIView {
             playTimer?.invalidate()
             playTimer = nil
         }
+        
         resetRecordButtonTarget()
 
         //show animation
@@ -368,13 +369,21 @@ extension ZLRecordView {
         if curPoint!.x < recordButton.frame.origin.x {
             zlSliderView.updateLocation(curPoint!.x - self.trackTouchPoint!.x)
             shimmerView.alpha = (kFloatCancelRecordingOffsetX - (firstTouchPoint!.x - trackTouchPoint!.x))/kFloatCancelRecordingOffsetX
-            }
-       
-        if (firstTouchPoint!.x - trackTouchPoint!.x) > kFloatCancelRecordingOffsetX {
-            senderA.cancelTracking(with: eventA)
-            senderA.removeTarget(nil, action: nil, for: UIControl.Event.allEvents)
-            self.recordCanceled()
         }
+        
+        if (firstTouchPoint!.x - trackTouchPoint!.x) >= kFloatCancelRecordingOffsetX - 5 {
+            
+            isCanceled = true
+            
+            if (firstTouchPoint!.x - trackTouchPoint!.x) >= kFloatCancelRecordingOffsetX{
+                senderA.cancelTracking(with: eventA)
+                senderA.removeTarget(nil, action: nil, for: UIControl.Event.allEvents)
+                self.recordCanceled()
+            }
+        }else{
+            isCanceled = false
+        }
+        
         
         guard timeCount >= 1 else {
             trackTouchPoint = curPoint
@@ -421,11 +430,10 @@ extension ZLRecordView {
     }
     
     
-    //3.finish Record Voice
+    //2.finish Record Voice
     @objc func recordFinishRecordVoice(){
+        
         guard isCanceled  == false else {
-            leftTipImageView.isHidden = true
-
             return
         }
         print("~~~~~~~recordFinish-----1")
