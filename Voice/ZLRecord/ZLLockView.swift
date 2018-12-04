@@ -57,9 +57,9 @@ class ZLLockView: UIView {
         lockAnimationView.lockHead.image = UIImage.init(named: "ic_ptt_lock_shackle")
         lockAnimationView.lockBody.image = UIImage.init(named: "ic_ptt_lock_body")
         
-//        var lockHeadFrame = lockAnimationView.lockHead.frame
-//        lockHeadFrame.origin.y -= 3
-//        lockAnimationView.lockHead.frame = lockHeadFrame
+        var lockHeadFrame = lockAnimationView.lockHead.frame
+        lockHeadFrame.origin.y = kStartY
+        lockAnimationView.lockHead.frame = lockHeadFrame
         
     }
     
