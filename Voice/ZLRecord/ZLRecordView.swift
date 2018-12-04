@@ -260,6 +260,37 @@ class ZLRecordView: UIView {
         self.lockView.frame = originFrame;
     }
     
+    func resetLeftTipImageView() {
+        leftTipImageView.isHidden = true
+        leftTipImageView = UIImageView.init(frame: CGRect.init(x:0, y: self.frame.size.height/2 - 36/2, width: 36, height: 36))
+    }
+    
+    func resetShimmerView() {
+        let shimmerViewFrame = CGRect(x: 100, y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
+        UIView.animate(withDuration: 0.3, delay: 0.0, options: UIView.AnimationOptions.curveLinear, animations: {
+            self.shimmerView.frame = shimmerViewFrame
+        }, completion: nil)
+        
+    }
+    
+    func resetTimeLabel() {
+        
+        
+        
+    }
+    
+    func resetAllView() {
+        
+        
+        
+    }
+    
+    func resetCancelView() {
+        
+        
+        
+    }
+    
     //MARK: == cancel the record
     // cancle record
     func recordCanceled() {
@@ -394,6 +425,8 @@ extension ZLRecordView {
     //3.finish Record Voice
     @objc func recordFinishRecordVoice(){
         guard isCanceled  == false else {
+            leftTipImageView.isHidden = true
+
             return
         }
         print("~~~~~~~recordFinish-----1")
