@@ -68,7 +68,7 @@ class ZLRecordView: UIView {
     lazy var recordButton: UIButton = {
         let recordButton = UIButton.init(frame: CGRect(x: frame.size.width-self.frame.size.height, y: 0, width: self.frame.size.height, height: self.frame.size.height))        
         recordButton.backgroundColor = self.backgroundColor
-        recordButton.setImage(UIImage.init(named: "MicRecBtn"), for:UIControl.State.normal)
+        recordButton.setImage(UIImage.init(named: "ButtonMic7"), for:UIControl.State.normal)
         recordButton.addTarget(self, action: #selector(recordStartRecordVoice(sender:event:)), for: .touchDown)
         recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragInside)
         recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragOutside)
@@ -79,7 +79,6 @@ class ZLRecordView: UIView {
     }()
     
     func resetRecordButtonTarget() {
-        recordButton.setImage(UIImage.init(named: "button_mic_white"), for:UIControl.State.normal)
         recordButton.addTarget(self, action: #selector(recordStartRecordVoice(sender:event:)), for: .touchDown)
         recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragInside)
         recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragOutside)
