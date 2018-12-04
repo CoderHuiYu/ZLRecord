@@ -5,8 +5,8 @@
 
 1. Ensure your view  controller conforms to the `RecordViewProtocol` protocol:
 ```swift
-class  YourViewController: RecordViewProtocol{
-    func endConvertWithData(_ data: NSData) {
+class  YourViewController: ZLRecordViewProtocol{
+    func zlRecordFinishRecordVoice(didFinishRecode voiceData: NSData) {
         voiceData = data
         // YourViewController code here
     }
