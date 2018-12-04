@@ -68,11 +68,10 @@ class ZLRecordView: UIView {
     lazy var recordButton: UIButton = {
         let recordButton = UIButton.init(frame: CGRect(x: frame.size.width-self.frame.size.height, y: 0, width: self.frame.size.height, height: self.frame.size.height))
         recordButton.backgroundColor = UIColor.orange
-        recordButton.setImage(UIImage.init(named: "ButtonMic7"), for:UIControl.State.normal)
+        recordButton.setImage(UIImage.init(named: "button_mic_white"), for:UIControl.State.normal)
         recordButton.addTarget(self, action: #selector(recordStartRecordVoice(sender:event:)), for: .touchDown)
         recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragInside)
         recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragOutside)
-        
         recordButton.addTarget(self, action: #selector(recordFinishRecordVoice), for: .touchUpInside)
         recordButton.addTarget(self, action: #selector(recordFinishRecordVoice), for: .touchCancel)
         recordButton.addTarget(self, action: #selector(recordFinishRecordVoice), for: .touchUpOutside)
@@ -118,14 +117,13 @@ class ZLRecordView: UIView {
         super.init(frame: frame)
         isUserInteractionEnabled = true
         backgroundColor = UIColor.init(displayP3Red: 200/255.0, green: 200/255.0, blue: 200/255.0, alpha: 1)
-        backgroundColor = UIColor.yellow
-        addSubview(recordButton)
         addSubview(shimmerView)
         addSubview(placeholdLabel)
         addSubview(leftTipImageView)
         addSubview(garbageView)
         addSubview(timeLabel)
         insertSubview(lockView, belowSubview: recordButton)
+        addSubview(recordButton)
 
     }
     
@@ -145,6 +143,7 @@ class ZLRecordView: UIView {
     }
     
     func showSliderView() {
+        shimmerView.alpha = 1
         leftTipImageView.isHidden = false
         let shimmerViewFrame = CGRect(x: 100, y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
         self.leftTipImageView.alpha = 1.0;
@@ -422,7 +421,8 @@ extension ZLRecordView {
         let zlSliderView : ZLSlideView = self.shimmerView.contentView as! ZLSlideView
         if curPoint!.x < recordButton.frame.origin.x {
             zlSliderView.updateLocation(curPoint!.x - self.trackTouchPoint!.x)
-        }
+            shimmerView.alpha = (kFloatCancelRecordingOffsetX - (firstTouchPoint!.x - trackTouchPoint!.x))/kFloatCancelRecordingOffsetX
+            }
        
         if (firstTouchPoint!.x - trackTouchPoint!.x) > kFloatCancelRecordingOffsetX {
             senderA.cancelTracking(with: eventA)
