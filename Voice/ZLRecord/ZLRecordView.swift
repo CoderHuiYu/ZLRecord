@@ -124,13 +124,13 @@ class ZLRecordView: UIView {
     }
     
     lazy var leftTipImageView : UIImageView  = {
-        let leftTipImageView = UIImageView.init(frame: CGRect.init(x:0, y: self.frame.size.height/2 - 28/2, width: 28 , height: 28))
+        let leftTipImageView = UIImageView.init(frame: CGRect.init(x:8, y: self.frame.size.height/2 - 28/2, width: 28 , height: 28))
         var leftTipImage =  UIImage.init(named: "button_mic_white")
         leftTipImage = leftTipImage?.withRenderingMode(UIImage.RenderingMode.alwaysTemplate)
         leftTipImageView.image = leftTipImage
-        leftTipImageView.tintColor = UIColor.red
         leftTipImageView.contentMode = .scaleAspectFit
         leftTipImageView.isHidden = true
+        leftTipImageView.tintColor = UIColor.lightGray
         return leftTipImageView
     }()
     
@@ -141,7 +141,7 @@ class ZLRecordView: UIView {
     }()
     
     lazy var timeLabel:UILabel = {
-        let timeLabel = UILabel.init(frame: CGRect.init(x: 40 , y: 0, width: 60, height: self.frame.height))
+        let timeLabel = UILabel.init(frame: CGRect.init(x: 45 , y: 0, width: 60, height: self.frame.height))
         timeLabel.textColor = UIColor.black
         timeLabel.backgroundColor = self.backgroundColor
         timeLabel.text = "0:00"
@@ -200,7 +200,6 @@ class ZLRecordView: UIView {
         
         leftTipImageView.alpha = 1.0;
         leftTipImageView.isHidden = false
-        timeLabel.isHidden = false
         
         let shimmerViewFrame = CGRect(x: 100, y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
         
@@ -293,7 +292,7 @@ class ZLRecordView: UIView {
     
     func resetLeftTipImageView() {
         leftTipImageView.isHidden = true
-        leftTipImageView.frame = CGRect.init(x:0, y: self.frame.size.height/2 - 28/2, width: 28, height: 28)
+        leftTipImageView.frame = CGRect.init(x:8, y: self.frame.size.height/2 - 28/2, width: 28, height: 28)
         leftTipImageView.layer.removeAllAnimations()
     }
     
@@ -337,7 +336,6 @@ class ZLRecordView: UIView {
         resetTimeLabel()
         resetShimmerView()
         resetCancelButton()
-        
     }
     
     //MARK: == cancel the record
@@ -354,13 +352,10 @@ class ZLRecordView: UIView {
             playTimer?.invalidate()
             playTimer = nil
         }
-        
         resetRecordButtonTarget()
-
         resetLockView()
         //show animation
         showLeftTipImageViewAnimation()
-        
         //notice delegate
         guard let delegate = delegate else {
             return
@@ -410,11 +405,8 @@ extension ZLRecordView {
         isCanceled = false;
         //2.start execut the animation
         showSliderView()
-        
         //3.start record
         startRecord()
-        //4.show the animation
-        showleftTipImageViewGradient()
     }
     
     //1. recordMayCancel
@@ -431,10 +423,12 @@ extension ZLRecordView {
             shimmerView.alpha = (kFloatCancelRecordingOffsetX - (firstTouchPoint!.x - trackTouchPoint!.x))/kFloatCancelRecordingOffsetX
         }
         if (firstTouchPoint!.x - trackTouchPoint!.x) >= kFloatCancelRecordingOffsetX{
-            isCanceled = true
-            senderA.cancelTracking(with: eventA)
-            senderA.removeTarget(nil, action: nil, for: UIControl.Event.allEvents)
-            self.recordCanceled()
+            if  timeCount >= 1{
+                isCanceled = true
+                senderA.cancelTracking(with: eventA)
+                senderA.removeTarget(nil, action: nil, for: UIControl.Event.allEvents)
+                self.recordCanceled()
+            }
         }
         
         guard timeCount >= 1 else {
@@ -521,13 +515,16 @@ extension ZLRecordView {
         if (timeCount == 1){
             showLockView()
         }
+        print("timeCount= \(timeCount)")
         if recordTime < 10 {
             self.timeLabel.text = "0:0" + "\(recordTime)"
         }else{
             self.timeLabel.text = "0:" + "\(recordTime)"
         }
     }
+    
     func startRecord() {
+        leftTipImageView.tintColor = UIColor.lightGray
         print("startRecord")
         isCanceled = false
         playTime = 0
@@ -556,14 +553,22 @@ extension ZLRecordView {
             recorder?.delegate = self
             recorder!.prepareToRecord()
             recorder?.isMeteringEnabled = true
-            recorder?.record()
         } catch let err {
             print("record fail:\(err.localizedDescription)")
         }
-        if playTimer == nil {
-            playTimer = Timer.init(timeInterval: 1, target: self, selector: #selector(countVoiceTime), userInfo: nil, repeats: true)
+    
+       
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.3) {
+            self.timeLabel.isHidden = false
+            self.leftTipImageView.tintColor = UIColor.red
+            //show the animation
+            self.showleftTipImageViewGradient()
+            self.recorder?.record()
+            if self.playTimer == nil {
+                self.playTimer = Timer.init(timeInterval: 1, target: self, selector: #selector(self.countVoiceTime), userInfo: nil, repeats: true)
+            }
+            RunLoop.main.add(self.playTimer!, forMode: RunLoop.Mode.common)
         }
-        RunLoop.main.add(playTimer!, forMode: RunLoop.Mode.common)
     }
 }
 
