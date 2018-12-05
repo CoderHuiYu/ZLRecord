@@ -70,7 +70,7 @@ class ZLSlideView: UIView {
     func changeStatus() {
         showLabel.text = "取消"
         showLabel.isUserInteractionEnabled = true
-        showLabel.textColor = UIColor.blue
+        showLabel.textColor = commonBlueColor
         arrowImageView.isHidden = true
         
         let tap : UITapGestureRecognizer = UITapGestureRecognizer.init(target: self, action:#selector(canelRecord))

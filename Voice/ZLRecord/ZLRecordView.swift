@@ -19,6 +19,7 @@ let kFloatGarbageBeginY  = 45.0
 let kFloatCancelRecordingOffsetX  : CGFloat = 100.0
 let kFloatLockViewHeight : CGFloat  = 120.0
 let kFloatLockViewWidth : CGFloat  = 40.0
+let commonBlueColor : UIColor = UIColor.init(red: 50/255.0, green: 146/255.0, blue: 244/255.0, alpha: 1)
 @objc protocol ZLRecordViewProtocol: NSObjectProtocol{
     //return the recode voice data
     func zlRecordFinishRecordVoice(didFinishRecode voiceData: NSData)
@@ -53,17 +54,21 @@ class ZLRecordView: UIView {
     
     lazy var sendButton : UIButton = {
         let btn = UIButton.init(frame: CGRect(x: frame.size.width-self.frame.size.height, y: 0, width: self.frame.size.height, height: self.frame.size.height))
-        btn.backgroundColor = UIColor.init(red: 50/255.0, green: 146/255.0, blue: 244/255.0, alpha: 1)
+        btn.backgroundColor = commonBlueColor
         btn.setImage(UIImage.init(named: "send"), for: UIControl.State.normal)
         btn.isHidden = true
+        btn.addTarget(self, action: #selector(sendVoice), for: UIControl.Event.touchUpInside)
         btn.layer.cornerRadius = self.frame.size.height/2
         btn.layer.masksToBounds = true
         return btn
     }()
+    
     lazy var shimmerView :ShimmeringView = {
-        let shimmerView = ShimmeringView.init(frame: CGRect.init(x: 100 + kScreenWidth, y: 0, width: self.frame.size.width-100 - self.frame.size.height, height: self.frame.size.height))
+        let shimmerView = ShimmeringView.init(frame: CGRect.init(x: 100 + kScreenWidth, y: 0, width: self.frame.size.width-100 - 100, height: self.frame.size.height))
         let zlSliderView = ZLSlideView.init(frame: shimmerView.bounds)
         zlSliderView.delegate = self
+//        zlSliderView.showLabel.center = self.center
+//        zlSliderView.arrowImageView.center = self.center
         shimmerView.contentView = zlSliderView
         
         shimmerView.shimmerDirection = .left
@@ -289,6 +294,7 @@ class ZLRecordView: UIView {
     func resetFinishStatusView() {
         recordButton.isHidden = false
         sendButton.isHidden = true
+        sendButton.isUserInteractionEnabled = true
         resetLeftTipImageView()
         resetShimmerView()
         resetTimeLabel()
@@ -453,7 +459,10 @@ extension ZLRecordView {
         recordEnded()
         isFinished = true
     }
-    
+    @objc private func sendVoice(){
+        sendButton.isUserInteractionEnabled = false
+        recordFinishRecordVoice()
+    }
    
     //MARK: == handle recodr voice
     

@@ -31,6 +31,15 @@ class ZLLockAnimationView: UIView {
         return lockBody
     }()
     
+    lazy var lockSettingImageView : UIImageView = {
+        let width = frame.size.width
+        let height = frame.size.height
+        let lockSetting = UIImageView.init(frame: CGRect.init(x: (width-10)/2, y: (height - 15+kStartY)/2, width: 10, height: 15))
+        lockSetting.image = UIImage.init(named: "ill_lock_settings")?.imageWithTintColor(color: commonBlueColor)
+        lockSetting.isHidden = true
+        return lockSetting
+    }()
+    
     lazy var arrowImageView : UIImageView = {
         let width = frame.size.width
         let arrowImageView = UIImageView.init(frame: CGRect.init(x: (width - 11.5)/2, y: kStartY+7+9+7, width: 11.5, height: 9))
@@ -56,6 +65,7 @@ class ZLLockAnimationView: UIView {
         addSubview(lockHead)
         addSubview(lockBody)
         addSubview(arrowImageView)
+        addSubview(lockSettingImageView)
     }
     
     func addAnimation ()  {

@@ -40,27 +40,17 @@ class ZLLockView: UIView {
     }
     
     func changeLockView() {
-        lockAnimationView.lockHead.layer.removeAllAnimations()
-        lockAnimationView.lockBody.layer.removeAllAnimations()
-        var lockHeadFrame = lockAnimationView.lockHead.frame
-        lockHeadFrame.origin.y += 3
-        lockAnimationView.lockHead.frame = lockHeadFrame
-        
-        lockAnimationView.lockHead.image = UIImage.init(named: "ic_ptt_lock_shackle")?.imageWithTintColor(color: UIColor.blue)
-        lockAnimationView.lockBody.image = UIImage.init(named: "ic_ptt_lock_body")?.imageWithTintColor(color: UIColor.blue)
-        
+       
+        lockAnimationView.lockSettingImageView.isHidden = false
+        lockAnimationView.lockBody.isHidden = true
+        lockAnimationView.lockHead.isHidden = true
     }
     
     func resetLockViewImageTint() {
-        
-        lockAnimationView.addAnimation()
-        lockAnimationView.lockHead.image = UIImage.init(named: "ic_ptt_lock_shackle")
-        lockAnimationView.lockBody.image = UIImage.init(named: "ic_ptt_lock_body")
-        
-        var lockHeadFrame = lockAnimationView.lockHead.frame
-        lockHeadFrame.origin.y = kStartY
-        lockAnimationView.lockHead.frame = lockHeadFrame
-        
+       lockAnimationView.addAnimation()
+       lockAnimationView.lockSettingImageView.isHidden = true
+       lockAnimationView.lockBody.isHidden = false
+       lockAnimationView.lockHead.isHidden = false
     }
     
 }
