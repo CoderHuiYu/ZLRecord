@@ -35,7 +35,7 @@ class ZLSlideView: UIView {
     
     func addAttribute() {
       
-        let attri : NSMutableAttributedString = NSMutableAttributedString.init(string: "滑动来取消")
+        let attri : NSMutableAttributedString = NSMutableAttributedString.init(string: NSLocalizedString("ZL_SWIPE_TO_CANCEL", comment: "Swipe to cancel"))
         let  attach : NSTextAttachment = NSTextAttachment.init()
         attach.image = UIImage.init(named: "SlideArrow")
         attach.bounds = CGRect.init(x: 5, y:(17-self.frame.size.height/2)/2, width: 8, height: 17)
@@ -56,7 +56,7 @@ class ZLSlideView: UIView {
     }
     
     func changeStatus() {
-        showLabel.text = "取消"
+        showLabel.text = NSLocalizedString("ZL_CANCEL", comment: "cancel")
         showLabel.isUserInteractionEnabled = true
         showLabel.textColor = commonBlueColor
 
