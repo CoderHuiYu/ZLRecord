@@ -307,7 +307,7 @@ class ZLRecordView: UIView {
         sendButton.isUserInteractionEnabled = true
         sendButton.isHidden = true
         sendButton.alpha = 1
-        resetLockView()
+//        resetLockView()
         resetTimeLabel()
         resetShimmerView()
         
@@ -329,6 +329,7 @@ class ZLRecordView: UIView {
         
         resetRecordButtonTarget()
 
+        resetLockView()
         //show animation
         showLeftTipImageViewAnimation()
         
