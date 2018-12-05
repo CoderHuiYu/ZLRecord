@@ -40,6 +40,7 @@ class ZLRecordView: UIView {
     var voiceData: NSData?
     weak var delegate: ZLRecordViewProtocol?
     var isFinished : Bool = false
+    var lastDate : NSDate?
     
     var trackTouchPoint : CGPoint?
     var firstTouchPoint : CGPoint?
@@ -365,19 +366,27 @@ extension ZLRecordView {
     
     // 0 start record
     @objc func recordStartRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
-        //0.addSubview and hide garbageView
+        //0.avoid tap twice
+        let curDate = NSDate.init()
         
-        //2.get the trackPoint
+        if lastDate != nil {
+            if (curDate.timeIntervalSince1970 - lastDate!.timeIntervalSince1970 < 0.5) {
+                lastDate = curDate
+                return
+            }
+        }
+       lastDate = curDate
+        //1.get the trackPoint
         let touch : UITouch = (eventA.touches(for: senderA)?.first)!
         trackTouchPoint = touch.location(in: self)
         firstTouchPoint = trackTouchPoint;
         isCanceled = false;
-        //3.start execut the animation
+        //2.start execut the animation
         showSliderView()
         
-        //4.d
+        //3.start record
         startRecord()
-        
+        //4.show the animation
         showleftTipImageViewGradient()
     }
     
