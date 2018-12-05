@@ -304,7 +304,9 @@ class ZLRecordView: UIView {
     
     func resetCancelStatusView() {
         recordButton.isHidden = false
+        sendButton.isUserInteractionEnabled = true
         sendButton.isHidden = true
+        sendButton.alpha = 1
         resetLockView()
         resetTimeLabel()
         resetShimmerView()
@@ -546,8 +548,10 @@ extension ZLRecordView: AVAudioRecorderDelegate{
 
 extension ZLRecordView : ZLSlideViewProtocol{
     func cancelRecordVoice() {
+        sendButton.isUserInteractionEnabled = false
         UIView.animate(withDuration: 1.0) {
             self.shimmerView.alpha = 0
+            self.sendButton.alpha = 0
         }
         recordCanceled()
     }
