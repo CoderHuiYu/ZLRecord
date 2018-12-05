@@ -125,8 +125,10 @@ class ZLRecordView: UIView {
     
     lazy var leftTipImageView : UIImageView  = {
         let leftTipImageView = UIImageView.init(frame: CGRect.init(x:0, y: self.frame.size.height/2 - 28/2, width: 28 , height: 28))
-        let image = UIImage.init(named: "button_mic_white")?.imageWithTintColor(color: UIColor.red)
-        leftTipImageView.image = image
+        var leftTipImage =  UIImage.init(named: "button_mic_white")
+        leftTipImage = leftTipImage?.withRenderingMode(UIImage.RenderingMode.alwaysTemplate)
+        leftTipImageView.image = leftTipImage
+        leftTipImageView.tintColor = UIColor.red
         leftTipImageView.contentMode = .scaleAspectFit
         leftTipImageView.isHidden = true
         return leftTipImageView
