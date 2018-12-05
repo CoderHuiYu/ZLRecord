@@ -15,11 +15,13 @@ let kFloatRecordImageUpTime  = 0.5
 let kFloatRecordImageRotateTime = 0.17
 let kFloatRecordImageDownTime = 0.5
 let kFloatGarbageAnimationTime = 0.3
-let kFloatGarbageBeginY  = 45.0
+let kFloatGarbageBeginY : CGFloat = 45.0
 let kFloatCancelRecordingOffsetX  : CGFloat = 100.0
 let kFloatLockViewHeight : CGFloat  = 120.0
 let kFloatLockViewWidth : CGFloat  = 40.0
 let commonBlueColor : UIColor = UIColor.init(red: 50/255.0, green: 146/255.0, blue: 244/255.0, alpha: 1)
+let kFloatSentButtonWidth : CGFloat = 30
+
 @objc protocol ZLRecordViewProtocol: NSObjectProtocol{
     //return the recode voice data
     func zlRecordFinishRecordVoice(didFinishRecode voiceData: NSData)
@@ -53,12 +55,13 @@ class ZLRecordView: UIView {
     }()
     
     lazy var sendButton : UIButton = {
-        let btn = UIButton.init(frame: CGRect(x: frame.size.width-self.frame.size.height, y: 0, width: self.frame.size.height, height: self.frame.size.height))
+        let gap = (frame.size.height - kFloatSentButtonWidth)/2
+        let btn = UIButton.init(frame: CGRect(x: frame.size.width - kFloatSentButtonWidth - gap, y: gap, width: kFloatSentButtonWidth, height: kFloatSentButtonWidth))
         btn.backgroundColor = commonBlueColor
         btn.setImage(UIImage.init(named: "send"), for: UIControl.State.normal)
         btn.isHidden = true
         btn.addTarget(self, action: #selector(sendVoice), for: UIControl.Event.touchUpInside)
-        btn.layer.cornerRadius = self.frame.size.height/2
+        btn.layer.cornerRadius = kFloatSentButtonWidth / 2
         btn.layer.masksToBounds = true
         return btn
     }()
@@ -67,8 +70,6 @@ class ZLRecordView: UIView {
         let shimmerView = ShimmeringView.init(frame: CGRect.init(x: 100 + kScreenWidth, y: 0, width: self.frame.size.width-100 - 100, height: self.frame.size.height))
         let zlSliderView = ZLSlideView.init(frame: shimmerView.bounds)
         zlSliderView.delegate = self
-//        zlSliderView.showLabel.center = self.center
-//        zlSliderView.arrowImageView.center = self.center
         shimmerView.contentView = zlSliderView
         
         shimmerView.shimmerDirection = .left
@@ -112,7 +113,7 @@ class ZLRecordView: UIView {
     }()
     
      lazy var garbageView : ZLGarbageView = {
-        let garbageView = ZLGarbageView.init(frame: CGRect.init(x: self.leftTipImageView.center.x - 15/2, y: 45, width: 30, height: self.frame.height))
+        let garbageView = ZLGarbageView.init(frame: CGRect.init(x: self.leftTipImageView.center.x - 15/2, y: kFloatGarbageBeginY, width: 30, height: self.frame.height))
         garbageView.isHidden = true
         return garbageView
     }()
@@ -248,12 +249,12 @@ class ZLRecordView: UIView {
         UIView.animate(withDuration: 0.3, delay: 0.0, options: UIView.AnimationOptions.curveEaseInOut, animations: {
             self.garbageView.headerView.transform = CGAffineTransform.identity
             var orgFrame = self.garbageView.frame
-            orgFrame.origin.y = 45
+            orgFrame.origin.y = kFloatGarbageBeginY
             self.garbageView.frame = orgFrame
         }){(finish) in
             self.garbageView.isHidden = true
             self.leftTipImageView.isHidden = true
-            self.garbageView.frame = CGRect.init(x: self.leftTipImageView.center.x - 15/2, y: 45, width: 30, height: self.frame.height)
+            self.garbageView.frame = CGRect.init(x: self.leftTipImageView.center.x - 15/2, y: kFloatGarbageBeginY, width: 30, height: self.frame.height)
             
             self.resetCancelStatusView()         
         }
