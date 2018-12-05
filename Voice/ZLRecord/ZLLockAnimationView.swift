@@ -35,7 +35,10 @@ class ZLLockAnimationView: UIView {
         let width = frame.size.width
         let height = frame.size.height
         let lockSetting = UIImageView.init(frame: CGRect.init(x: (width-10)/2, y: (height - 15+kStartY)/2, width: 10, height: 15))
-        lockSetting.image = UIImage.init(named: "ill_lock_settings")?.imageWithTintColor(color: commonBlueColor)
+        var lockImage = UIImage(named: "ill_lock_settings")
+        lockImage = lockImage?.withRenderingMode(UIImage.RenderingMode.alwaysTemplate)
+        lockSetting.tintColor = commonBlueColor
+        lockSetting.image = lockImage
         lockSetting.isHidden = true
         return lockSetting
     }()
