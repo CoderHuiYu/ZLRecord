@@ -55,6 +55,26 @@ class ZLRecordView: UIView {
         return placeholdLabel
     }()
     
+    lazy var cancelButton : UIButton = {
+       let btn = UIButton.init(frame: CGRect.init(x:(frame.size.width - 100)/2, y: 0, width: 100, height: frame.size.height))
+        btn.isHidden = true
+        btn.setTitle(NSLocalizedString("ZL_CANCEL", comment: "cancel"), for: UIControl.State.normal)
+        btn.setTitleColor(commonBlueColor, for: UIControl.State.normal)
+        btn.addTarget(self, action: #selector(cancelRecordVoice), for: UIControl.Event.touchUpInside)
+        return btn
+    }()
+    
+    @objc func cancelRecordVoice() {
+        sendButton.isUserInteractionEnabled = false
+        
+        UIView.animate(withDuration: 1.0) {
+            self.cancelButton.alpha = 0
+            self.cancelButton.isHidden = true
+            self.sendButton.alpha = 0
+        }
+        recordCanceled()
+    }
+    
     lazy var sendButton : UIButton = {
         let gap = (frame.size.height - kFloatSentButtonWidth)/2
         let btn = UIButton.init(frame: CGRect(x: frame.size.width - kFloatSentButtonWidth - gap, y: gap, width: kFloatSentButtonWidth, height: kFloatSentButtonWidth))
@@ -70,7 +90,6 @@ class ZLRecordView: UIView {
     lazy var shimmerView :ShimmeringView = {
         let shimmerView = ShimmeringView.init(frame: CGRect.init(x: 100 + kScreenWidth, y: 0, width: self.frame.size.width-100 - 100, height: self.frame.size.height))
         let zlSliderView = ZLSlideView.init(frame: shimmerView.bounds)
-        zlSliderView.delegate = self
         shimmerView.contentView = zlSliderView
         
         shimmerView.shimmerDirection = .left
@@ -152,6 +171,7 @@ class ZLRecordView: UIView {
         addSubview(timeLabel)
         addSubview(recordButton)
         addSubview(sendButton)
+        addSubview(cancelButton)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -283,7 +303,6 @@ class ZLRecordView: UIView {
         
         let zlSlideView = shimmerView.contentView as! ZLSlideView
         zlSlideView.resetFrame()
-        zlSlideView.resetShowLableText()
     }
     
     func resetTimeLabel() {
@@ -291,7 +310,10 @@ class ZLRecordView: UIView {
         timeLabel.text = "0:00"
     }
     
-    
+    func resetCancelButton() {
+        cancelButton.isHidden = true
+        cancelButton.alpha = 1
+    }
     
     func resetFinishStatusView() {
         recordButton.isHidden = false
@@ -301,6 +323,7 @@ class ZLRecordView: UIView {
         resetShimmerView()
         resetTimeLabel()
         resetLockView()
+        resetCancelButton()
     }
     
     func resetCancelStatusView() {
@@ -311,12 +334,14 @@ class ZLRecordView: UIView {
 //        resetLockView()
         resetTimeLabel()
         resetShimmerView()
+        resetCancelButton()
         
     }
     
     //MARK: == cancel the record
     // cancle record
     func recordCanceled() {
+       
         print("isCanceled")
         self.timeCount = 0
         
@@ -437,7 +462,8 @@ extension ZLRecordView {
                 sendButton.isHidden = false
                 recordButton.isHidden = true
                 shimmerView.isShimmering = false
-                zlSliderView.changeStatus()
+                shimmerView.isHidden = true
+                cancelButton.isHidden = false
                 originFrame.size = CGSize.init(width: kFloatLockViewWidth, height: kFloatLockViewWidth)
                 lockView.frame = originFrame;
                 lockView.addBoundsAnimation()
@@ -555,13 +581,3 @@ extension ZLRecordView: AVAudioRecorderDelegate{
     }
 }
 
-extension ZLRecordView : ZLSlideViewProtocol{
-    func cancelRecordVoice() {
-        sendButton.isUserInteractionEnabled = false
-        UIView.animate(withDuration: 1.0) {
-            self.shimmerView.alpha = 0
-            self.sendButton.alpha = 0
-        }
-        recordCanceled()
-    }
-}

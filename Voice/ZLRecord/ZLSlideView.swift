@@ -46,35 +46,12 @@ class ZLSlideView: UIView {
     
     func resetFrame() {
         showLabel.frame = CGRect.init(origin: self.bounds.origin, size: self.bounds.size)
-        addAttribute()
     }
     
     func updateLocation(_ offSetX : CGFloat) {
         var labelFrame = showLabel.frame
         labelFrame.origin.x += offSetX
         showLabel.frame = labelFrame
-    }
-    
-    func changeStatus() {
-        showLabel.text = NSLocalizedString("ZL_CANCEL", comment: "cancel")
-        showLabel.isUserInteractionEnabled = true
-        showLabel.textColor = commonBlueColor
-
-        let tap : UITapGestureRecognizer = UITapGestureRecognizer.init(target: self, action:#selector(canelRecord))
-        showLabel.addGestureRecognizer(tap)
-    }
-    
-    func resetShowLableText() {
-        addAttribute()
-        showLabel.font = UIFont.systemFont(ofSize: 16)
-        showLabel.textColor = UIColor.init(red: 20/255.0, green: 20/255.0, blue: 20/255.0, alpha: 1)
-        showLabel.textAlignment = NSTextAlignment.center
-        showLabel.isUserInteractionEnabled = false
-    }
-    
-    @objc func canelRecord() {
-        guard let delegate = delegate else {return}
-        delegate.cancelRecordVoice()
     }
 }
 
