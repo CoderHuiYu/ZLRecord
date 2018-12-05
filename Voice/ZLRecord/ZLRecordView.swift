@@ -271,6 +271,7 @@ class ZLRecordView: UIView {
     
     func resetShimmerView() {
         shimmerView.isHidden = true
+        shimmerView.isShimmering = true
         let shimmerViewFrame = CGRect(x: 100 + kScreenWidth , y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
         self.shimmerView.frame = shimmerViewFrame
         
@@ -540,16 +541,9 @@ extension ZLRecordView: AVAudioRecorderDelegate{
 
 extension ZLRecordView : ZLSlideViewProtocol{
     func cancelRecordVoice() {
-       
-        let basicAnimtion: CABasicAnimation = CABasicAnimation.init(keyPath: "opacity")
-        basicAnimtion.duration = 1.0
-        basicAnimtion.fromValue = 1.0
-        basicAnimtion.toValue = 0
-        basicAnimtion.isRemovedOnCompletion = true
-        basicAnimtion.fillMode = CAMediaTimingFillMode.forwards
-        let zlsiderView = shimmerView.contentView as! ZLSlideView
-        zlsiderView.layer.add(basicAnimtion, forKey: "basicAnimtion")
-
+        UIView.animate(withDuration: 1.0) {
+            self.shimmerView.alpha = 0
+        }
         recordCanceled()
     }
 }
