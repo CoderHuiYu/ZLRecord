@@ -489,7 +489,6 @@ extension ZLRecordView {
             self.timeLabel.text = "0:" + "\(recordTime)"
         }
     }
-    
     func startRecord() {
         print("startRecord")
         isCanceled = false
