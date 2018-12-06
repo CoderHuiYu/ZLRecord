@@ -12,6 +12,7 @@ import Foundation
 import QuartzCore
 import AudioToolbox
 
+let kFloatSliderShowTime : Double = 0.2
 let kFloatRecordImageUpTime  = 0.5
 let kFloatRecordImageRotateTime = 0.17
 let kFloatRecordImageDownTime = 0.5
@@ -257,7 +258,7 @@ class ZLRecordView: UIView {
         leftTipImageView.isHidden = false
         
         let shimmerViewFrame = CGRect(x: 100, y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
-        UIView.animate(withDuration: 0.5, delay: 0.0, options: UIView.AnimationOptions.curveLinear, animations: {
+        UIView.animate(withDuration: kFloatSliderShowTime, delay: 0.0, options: UIView.AnimationOptions.curveLinear, animations: {
             self.shimmerView.frame = shimmerViewFrame
         }, completion: nil)
     }
