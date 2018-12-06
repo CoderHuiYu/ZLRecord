@@ -449,15 +449,21 @@ extension ZLRecordView {
         print("~~~~~~~recordFinish-----0")
         finishDate = NSDate.init()
         print("tap release :gapTime:\(finishDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970)")
-     
+        if finishDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970 < 1 {
+            UIView.animate(withDuration: 1, animations: {
+                self.show(NSLocalizedString("ZL_TOSHORT_VOICE", comment: "Message too short"), 12, UIColor.white)
+            }) { (finish) in
+                self.hide()
+            }
+        }
         guard isStarted == true else {
             return
         }
         guard isCanceled  == false else {
             return
         }
+        self.hide()
         isFinished = true
-       
         print("~~~~~~~recordFinish-----1")
         recordEnded()
     }
@@ -526,7 +532,7 @@ extension ZLRecordView {
         
         print("isCanceled")
         self.timeCount = 0
-        
+        self.hide()
         //record stoped and delete the record
         if (playTimer != nil) {
             recorder?.stop()
@@ -584,7 +590,12 @@ extension ZLRecordView {
             self.timeLabel.text = "0:0" + "\(recordTime)"
         }else{
             self.timeLabel.text = "0:" + "\(recordTime)"
+            
+            if recordTime >= 50 {
+                self.show("\(60 - recordTime)")
+            }
         }
+        
     }
 }
 

@@ -23,7 +23,7 @@ class ViewController: UIViewController ,AVAudioRecorderDelegate{
     lazy var playBtn: UIButton = {
         let playBtn = UIButton()
         playBtn.setTitle("play", for: .normal)
-        playBtn.frame = CGRect(x: (UIScreen.main.bounds.size.width-60)/2, y: 230, width: 60, height: 60)
+        playBtn.frame = CGRect(x: (UIScreen.main.bounds.size.width-60)/2, y: 100, width: 60, height: 60)
         playBtn.layer.cornerRadius = 30
         playBtn.layer.masksToBounds = true
         playBtn.addTarget(self, action: #selector(playBtnClick(_:)), for: .touchUpInside)
