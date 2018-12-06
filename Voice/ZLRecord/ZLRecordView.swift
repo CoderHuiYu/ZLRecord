@@ -388,6 +388,7 @@ class ZLRecordView: UIView {
     //MARK: == Actions
     @objc func closeRightTipView() {
         if rightTipView.isHidden == false {
+            UIView.animate(withDuration: 1, animations: {
                 self.rightTipView.alpha = 0
             }, completion: { (finish) in
                 if self.rightTipView.alpha == 0 {
