@@ -40,7 +40,7 @@ class ViewController: UIViewController ,AVAudioRecorderDelegate{
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor.init(red: 245/255.0, green: 245/255.0, blue: 245/255.0, alpha: 1)
+        view.backgroundColor = RGBColor(r: 220, g: 220, b: 220)
         view.addSubview(playBtn)
         view.addSubview(recordView)
 //        view.addSubview(lockView)

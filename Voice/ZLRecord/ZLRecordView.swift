@@ -207,7 +207,7 @@ class ZLRecordView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         isUserInteractionEnabled = true
-        backgroundColor = UIColor.init(displayP3Red: 200/255.0, green: 200/255.0, blue: 200/255.0, alpha: 1)
+        backgroundColor = RGBColor(r: 245, g: 245, b: 245)
         insertSubview(lockView, belowSubview: recordButton)
         addSubview(shimmerView)
         addSubview(placeholdLabel)
@@ -327,10 +327,10 @@ class ZLRecordView: UIView {
     }
     
     func resetShimmerView() {
-        shimmerView.isHidden = true
-        shimmerView.isShimmering = true
         let shimmerViewFrame = CGRect(x: 100 + kScreenWidth , y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
         self.shimmerView.frame = shimmerViewFrame
+        self.shimmerView.isHidden = true
+        self.shimmerView.isShimmering = true
         let zlSlideView = shimmerView.contentView as! ZLSlideView
         zlSlideView.resetFrame()
     }
@@ -369,10 +369,32 @@ class ZLRecordView: UIView {
     
     //MARK: == Actions
     @objc func closeRightTipView() {
-        if rightTipView.isHidden {
-            return
+        if rightTipView.isHidden == false {
+            UIView.animate(withDuration: 1, animations: {
+                self.rightTipView.alpha = 0
+            }, completion: { (finish) in
+                self.rightTipView.isHidden = true
+                self.rightTipView.alpha = 1
+            })
         }
     }
+    
+    func showRightTipView() {
+        
+        if rightTipView.isHidden {
+            self.rightTipView.isHidden = false
+            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 2) {
+                UIView.animate(withDuration: 1, animations: {
+                    self.rightTipView.alpha = 0
+                }, completion: { (finish) in
+                     self.rightTipView.isHidden = true
+                    self.rightTipView.alpha = 1
+                })
+               
+            }
+        }
+    }
+    
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         if point.y < 0 && point.y > -40 {
             return rightTipView
@@ -399,7 +421,7 @@ extension ZLRecordView {
         }
         let generatro = UIImpactFeedbackGenerator(style: UIImpactFeedbackGenerator.FeedbackStyle.medium)
         generatro.impactOccurred()
-//        print("~~~~~~~ready Start -----0")
+        print("~~~~~~~ready Start -----0")
         //1.avoid tap twice
         let curDate = NSDate.init()
         if startDate != nil {
@@ -410,7 +432,7 @@ extension ZLRecordView {
                 return
             }
         }
-//         print("~~~~~~~ready Start -----1")
+        print("~~~~~~~ready Start -----1")
         startDate = curDate
         //2.get the trackPoint
         let touch : UITouch = (eventA.touches(for: senderA)?.first)!
@@ -490,14 +512,12 @@ extension ZLRecordView {
     
     //2.finish Record Voice
     @objc func recordFinishRecordVoice(){
-//        print("~~~~~~~recordFinish-----0")
+        print("~~~~~~~recordFinish-----0")
         finishDate = NSDate.init()
         print("tap release :gapTime:\(finishDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970)")
         if finishDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970 < 1 {
-            UIView.animate(withDuration: 1, animations: {
-                self.show(NSLocalizedString("ZL_TOSHORT_VOICE", comment: "Message too short"), 12, UIColor.white)
-            }) { (finish) in
-                self.hide()
+            UIView.animate(withDuration: 1) {
+                self.showRightTipView()
             }
         }
 //        print("tap release :gapTime:\(finishDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970)")
@@ -517,11 +537,11 @@ extension ZLRecordView {
     //MARK: == record status: 1.start 2.cancel 3.end
     func startRecord() {
        
-        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.3) {
-//           print("1--readyRecord")
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.5) {
+           print("1--readyRecord")
             let timeGap : TimeInterval = (self.finishDate.timeIntervalSince1970 - self.startDate!.timeIntervalSince1970)
             //if timeGap < 0.3 表示手势点击后抬起 不执行任何操作
-//            print("judge timeGap can record:\(timeGap)")
+            print("judge timeGap can record:\(timeGap)")
             if (timeGap <= 0.3) && (timeGap > 0){
                 self.resetLeftTipImageView()
                 self.resetShimmerView()
