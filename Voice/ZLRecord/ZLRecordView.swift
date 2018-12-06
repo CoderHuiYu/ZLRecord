@@ -23,6 +23,7 @@ let kFloatLockViewWidth : CGFloat  = 40.0
 let commonBlueColor : UIColor = UIColor.init(red: 50/255.0, green: 146/255.0, blue: 244/255.0, alpha: 1)
 let kFloatSentButtonWidth : CGFloat = 30
 var sysID:SystemSoundID = 0
+private var avPlayer:AVAudioPlayer!
 
 @objc protocol ZLRecordViewProtocol: NSObjectProtocol{
     //return the recode voice data
@@ -391,12 +392,7 @@ extension ZLRecordView {
     //MARK: == handle : click the recordButton and it's status
     // 0 start record
     @objc func recordStartRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
-        let tipMusicPath = Bundle.main.path(forResource: "send_message", ofType: "m4a")
-        if let path = tipMusicPath {
-            let tipMusicUrl = URL(fileURLWithPath: path)
-            AudioServicesCreateSystemSoundID(tipMusicUrl as CFURL, &sysID)
-            AudioServicesPlayAlertSound(SystemSoundID(sysID))
-        }
+        startPlayMusic(musicName: "send_message")
         let generatro = UIImpactFeedbackGenerator(style: UIImpactFeedbackGenerator.FeedbackStyle.medium)
         generatro.impactOccurred()
 //        print("~~~~~~~ready Start -----0")
@@ -519,7 +515,7 @@ extension ZLRecordView {
             }
             let audioSession = AVAudioSession.sharedInstance()
             do {
-                try audioSession.setCategory(.playAndRecord, mode: .default, options: .defaultToSpeaker)
+                try audioSession.setCategory(.playAndRecord, mode: .default, options:[.allowBluetooth,.allowBluetoothA2DP])
             } catch let err{
                 print("set type fail:\(err.localizedDescription)")
                 return
@@ -629,6 +625,22 @@ extension ZLRecordView {
 }
 
 extension ZLRecordView: AVAudioRecorderDelegate{
+    func startPlayMusic(musicName muscicName : String) {
+        guard let path = Bundle.main.path(forResource: muscicName, ofType: "m4a") else {
+            return
+        }
+        let pathUrl = URL(fileURLWithPath: path)
+        AudioServicesCreateSystemSoundID(pathUrl as CFURL, &sysID)
+        AudioServicesPlaySystemSound(sysID)
+//        AudioServicesPlayAlertSound(sysID)
+//        do {
+//            try avPlayer = AVAudioPlayer(contentsOf: pathUrl)
+//        }catch {
+//            print("play error")
+//        }
+//        avPlayer.play()
+    }
+    
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         let url = NSURL.fileURL(withPath: docmentFilePath!)
         do{
