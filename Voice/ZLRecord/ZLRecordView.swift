@@ -391,8 +391,10 @@ class ZLRecordView: UIView {
             UIView.animate(withDuration: 1, animations: {
                 self.rightTipView.alpha = 0
             }, completion: { (finish) in
-                self.rightTipView.isHidden = true
-                self.rightTipView.alpha = 1
+                if self.rightTipView.alpha == 0 {
+                    self.rightTipView.isHidden = true
+                    self.rightTipView.alpha = 1
+                }
             })
         }
     }
