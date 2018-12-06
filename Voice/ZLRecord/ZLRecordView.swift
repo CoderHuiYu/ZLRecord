@@ -23,7 +23,7 @@ let kFloatLockViewWidth : CGFloat  = 40.0
 let commonBlueColor : UIColor = UIColor.init(red: 50/255.0, green: 146/255.0, blue: 244/255.0, alpha: 1)
 let kFloatSentButtonWidth : CGFloat = 30
 var sysID:SystemSoundID = 0
-private var avPlayer:AVAudioPlayer!
+//private var avPlayer:AVAudioPlayer!
 
 @objc protocol ZLRecordViewProtocol: NSObjectProtocol{
     //return the recode voice data
