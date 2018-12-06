@@ -39,13 +39,17 @@ class ZLRecordView: UIView {
     
     var voiceData: NSData?
     weak var delegate: ZLRecordViewProtocol?
-    var isFinished : Bool = false
-    var lastDate : NSDate?
-    
+    var startDate : NSDate?
+    var finishDate : NSDate = NSDate.init()
     var trackTouchPoint : CGPoint?
     var firstTouchPoint : CGPoint?
-    var isCanceled : Bool = false      //is canceled
     var timeCount : Int = 0
+    
+    var isStarted : Bool = false
+    var isCanceled : Bool = false      //is canceled
+    var isFinished : Bool = false
+    
+   
     
     
     //MARK: == init the view
@@ -317,6 +321,7 @@ class ZLRecordView: UIView {
     }
     
     func resetFinishStatusView() {
+     
         recordButton.isHidden = false
         sendButton.isHidden = true
         sendButton.isUserInteractionEnabled = true
@@ -337,75 +342,63 @@ class ZLRecordView: UIView {
         resetShimmerView()
         resetCancelButton()
     }
-    
-    //MARK: == cancel the record
-    // cancle record
-    func recordCanceled() {
-       
-        print("isCanceled")
-        self.timeCount = 0
-        
-        //record stoped and delete the record
-        if (playTimer != nil) {
-            recorder?.stop()
-            recorder?.deleteRecording()
-            playTimer?.invalidate()
-            playTimer = nil
-        }
-        resetRecordButtonTarget()
-        resetLockView()
-        //show animation
-        showLeftTipImageViewAnimation()
-        //notice delegate
-        guard let delegate = delegate else {
-            return
-        }
-        if let noticeCancelRecord = delegate.zlRecordCanceledRecordVoice {
-            noticeCancelRecord()
-        }
-    }
-    
-    //ended record
-    func recordEnded()  {
-        
-        recorder?.stop()
-        playTimer?.invalidate()
-        playTimer = nil
-
-        
-        resetRecordButtonTarget()
-        
-        resetFinishStatusView()
-//        let zlSliderView : ZLSlideView = self.shimmerView.contentView as! ZLSlideView
-//        zlSliderView.resetFrame()
-    }
-    
 }
 
 
-  //MARK: == handle : click the recordButton and it's status
+
 extension ZLRecordView {
-    
+    //MARK: == handle : click the recordButton and it's status
     // 0 start record
     @objc func recordStartRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
-        //0.avoid tap twice
+        print("~~~~~~~ready Start -----0")
+        //1.avoid tap twice
         let curDate = NSDate.init()
-        
-        if lastDate != nil {
-            if (curDate.timeIntervalSince1970 - lastDate!.timeIntervalSince1970 < 0.5) {
-                lastDate = curDate
+        if startDate != nil {
+            print("tap time Gap : \(curDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970 < 0.5)")
+            if (curDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970 < 0.5) {
+                startDate = curDate
+                isStarted = false
                 return
             }
         }
-       lastDate = curDate
-        //1.get the trackPoint
+         print("~~~~~~~ready Start -----1")
+        startDate = curDate
+        //2.get the trackPoint
         let touch : UITouch = (eventA.touches(for: senderA)?.first)!
         trackTouchPoint = touch.location(in: self)
         firstTouchPoint = trackTouchPoint;
-        isCanceled = false;
-        //2.start execut the animation
-        showSliderView()
-        //3.start record
+        //3.ready to record
+        leftTipImageView.tintColor = UIColor.lightGray
+        print("startRecord")
+        playTime = 0
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            try audioSession.setCategory(.playAndRecord, mode: .default, options: .defaultToSpeaker)
+        } catch let err{
+            print("set type fail:\(err.localizedDescription)")
+            return
+        }
+        //set session
+        do {
+            try audioSession.setActive(true)
+        } catch let err {
+            print("inital fail:\(err.localizedDescription)")
+            return
+        }
+        //Compressed audio
+        let recordSetting: [String : Any] = [AVEncoderAudioQualityKey:NSNumber(integerLiteral: AVAudioQuality.max.rawValue),AVFormatIDKey:NSNumber(integerLiteral: Int(kAudioFormatMPEG4AAC)),AVNumberOfChannelsKey:1,AVLinearPCMBitDepthKey:8,AVSampleRateKey:NSNumber(integerLiteral: 44100)]
+        let docments = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last
+        let fileNameString = String(Int(Date.timeIntervalBetween1970AndReferenceDate))
+        docmentFilePath = docments! + "/\(fileNameString).caf" //Set storage address
+        do {
+            let url = NSURL.fileURL(withPath: docmentFilePath!)
+            recorder = try AVAudioRecorder(url: url, settings: recordSetting)
+            recorder?.delegate = self
+            recorder!.prepareToRecord()
+            recorder?.isMeteringEnabled = true
+        } catch let err {
+            print("record fail:\(err.localizedDescription)")
+        }
         startRecord()
     }
     
@@ -483,23 +476,93 @@ extension ZLRecordView {
     //2.finish Record Voice
     @objc func recordFinishRecordVoice(){
         print("~~~~~~~recordFinish-----0")
+        finishDate = NSDate.init()
+        print("tap release :gapTime:\(finishDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970)")
+     
+        guard isStarted == true else {
+            return
+        }
         guard isCanceled  == false else {
             return
         }
-        print("~~~~~~~recordFinish-----1")
-        recorder?.stop()
-        playTimer?.invalidate()
-        playTimer = nil
-        
-        recordEnded()
         isFinished = true
+       
+        print("~~~~~~~recordFinish-----1")
+        recordEnded()
     }
+   
+    //MARK: == record status: 1.start 2.cancel 3.end
+    func startRecord() {
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.3) {
+           print("1--readyRecord")
+            let timeGap : TimeInterval = (self.finishDate.timeIntervalSince1970 - self.startDate!.timeIntervalSince1970)
+           //if timeGap < 0.3 表示手势点击后抬起 不执行任何操作
+            print("timeGap:\(timeGap)")
+            if (timeGap <= 0.3) && (timeGap > 0){
+                self.recorder?.stop()
+                self.recorder?.deleteRecording()
+                return
+            }
+             print("2--startedRecord")
+            //1.change status to start
+            self.isStarted = true
+            self.isCanceled = false
+            //2.start execut the animation
+            self.showSliderView()
+            self.timeLabel.isHidden = false
+            self.leftTipImageView.tintColor = UIColor.red
+            //3.show the animation
+            self.showleftTipImageViewGradient()
+            self.recorder?.record()
+            if self.playTimer == nil {
+                self.playTimer = Timer.init(timeInterval: 1, target: self, selector: #selector(self.countVoiceTime), userInfo: nil, repeats: true)
+            }
+            RunLoop.main.add(self.playTimer!, forMode: RunLoop.Mode.common)
+        }
+    }
+    
+    // cancle record
+    func recordCanceled() {
+        
+        print("isCanceled")
+        self.timeCount = 0
+        
+        //record stoped and delete the record
+        if (playTimer != nil) {
+            recorder?.stop()
+            recorder?.deleteRecording()
+            playTimer?.invalidate()
+            playTimer = nil
+        }
+        resetRecordButtonTarget()
+        resetLockView()
+        //show animation
+        showLeftTipImageViewAnimation()
+        //notice delegate
+        guard let delegate = delegate else {
+            return
+        }
+        if let noticeCancelRecord = delegate.zlRecordCanceledRecordVoice {
+            noticeCancelRecord()
+        }
+    }
+    
+    //ended record
+    func recordEnded()  {
+        if (playTimer != nil || recorder != nil) {
+            recorder?.stop()
+            playTimer?.invalidate()
+            playTimer = nil
+        }
+        resetRecordButtonTarget()
+        resetFinishStatusView()
+    }
+    
+     //MARK: == handle recode voice && send voice
     @objc private func sendVoice(){
         sendButton.isUserInteractionEnabled = false
         recordFinishRecordVoice()
     }
-   
-    //MARK: == handle recodr voice
     
     @objc private func countVoiceTime(){
         playTime = playTime + 1
@@ -509,6 +572,7 @@ extension ZLRecordView {
         }
         print("~~~~~~~\(playTime)")
     }
+    
     // is recording
     func recordIsRecordingVoice(_ recordTime: Int) {
         timeCount = recordTime
@@ -520,54 +584,6 @@ extension ZLRecordView {
             self.timeLabel.text = "0:0" + "\(recordTime)"
         }else{
             self.timeLabel.text = "0:" + "\(recordTime)"
-        }
-    }
-    
-    func startRecord() {
-        leftTipImageView.tintColor = UIColor.lightGray
-        print("startRecord")
-        isCanceled = false
-        playTime = 0
-        let audioSession = AVAudioSession.sharedInstance()
-        do {
-            try audioSession.setCategory(.playAndRecord, mode: .default, options: .defaultToSpeaker)
-        } catch let err{
-            print("set type fail:\(err.localizedDescription)")
-            return
-        }
-        //set session
-        do {
-            try audioSession.setActive(true)
-        } catch let err {
-            print("inital fail:\(err.localizedDescription)")
-            return
-        }
-        //Compressed audio
-        let recordSetting: [String : Any] = [AVEncoderAudioQualityKey:NSNumber(integerLiteral: AVAudioQuality.max.rawValue),AVFormatIDKey:NSNumber(integerLiteral: Int(kAudioFormatMPEG4AAC)),AVNumberOfChannelsKey:1,AVLinearPCMBitDepthKey:8,AVSampleRateKey:NSNumber(integerLiteral: 44100)]
-        let docments = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last
-        let fileNameString = String(Int(Date.timeIntervalBetween1970AndReferenceDate))
-        docmentFilePath = docments! + "/\(fileNameString).caf" //Set storage address
-        do {
-            let url = NSURL.fileURL(withPath: docmentFilePath!)
-            recorder = try AVAudioRecorder(url: url, settings: recordSetting)
-            recorder?.delegate = self
-            recorder!.prepareToRecord()
-            recorder?.isMeteringEnabled = true
-        } catch let err {
-            print("record fail:\(err.localizedDescription)")
-        }
-    
-       
-        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.3) {
-            self.timeLabel.isHidden = false
-            self.leftTipImageView.tintColor = UIColor.red
-            //show the animation
-            self.showleftTipImageViewGradient()
-            self.recorder?.record()
-            if self.playTimer == nil {
-                self.playTimer = Timer.init(timeInterval: 1, target: self, selector: #selector(self.countVoiceTime), userInfo: nil, repeats: true)
-            }
-            RunLoop.main.add(self.playTimer!, forMode: RunLoop.Mode.common)
         }
     }
 }
