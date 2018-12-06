@@ -49,6 +49,7 @@ class ZLRecordView: UIView {
     var trackTouchPoint : CGPoint?
     var firstTouchPoint : CGPoint?
     var timeCount : Int = 0
+    var shimmerWidth :CGFloat = 0.0
     
     var isStarted : Bool = false
     var isCanceled : Bool = false      //is canceled
@@ -93,7 +94,10 @@ class ZLRecordView: UIView {
     }()
     
     lazy var shimmerView :ShimmeringView = {
-        let shimmerView = ShimmeringView.init(frame: CGRect.init(x: 100 + kScreenWidth, y: 0, width: self.frame.size.width-100 - 100, height: self.frame.size.height))
+        let textString = NSLocalizedString("ZL_SWIPE_TO_CANCEL", comment: "Swipe to cancel")
+        shimmerWidth = self.getStringWidth(string: textString, font: UIFont.systemFont(ofSize: kLabelFont)) + 30
+        let shimmerView = ShimmeringView.init(frame: CGRect.init(x: (kScreenWidth - shimmerWidth)/2 + kScreenWidth, y: 0, width: shimmerWidth, height: self.frame.size.height))
+     
         let zlSliderView = ZLSlideView.init(frame: shimmerView.bounds)
         shimmerView.contentView = zlSliderView
         shimmerView.shimmerDirection = .left
@@ -257,7 +261,7 @@ class ZLRecordView: UIView {
         leftTipImageView.alpha = 1.0;
         leftTipImageView.isHidden = false
         
-        let shimmerViewFrame = CGRect(x: 100, y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
+        let shimmerViewFrame = CGRect.init(x: (kScreenWidth - shimmerWidth)/2 , y: 0, width: shimmerWidth, height: self.frame.size.height)
         UIView.animate(withDuration: kFloatSliderShowTime, delay: 0.0, options: UIView.AnimationOptions.curveLinear, animations: {
             self.shimmerView.frame = shimmerViewFrame
         }, completion: nil)
@@ -720,5 +724,13 @@ extension ZLRecordView: AVAudioRecorderDelegate{
         } catch let err{
             print("record fail:\(err.localizedDescription)")
         }
+    }
+}
+extension NSObject {
+    func getStringWidth(string :String, font :UIFont) -> CGFloat {
+        let attributes = [NSAttributedString.Key.font:font]
+        let option = NSStringDrawingOptions.usesLineFragmentOrigin
+        let rect:CGRect = string.boundingRect(with: CGSize.init(width:CGFloat(MAXFLOAT), height:CGFloat(MAXFLOAT)), options: option, attributes: attributes, context: nil)
+        return rect.size.width
     }
 }
