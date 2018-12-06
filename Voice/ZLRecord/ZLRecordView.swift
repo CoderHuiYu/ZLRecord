@@ -421,8 +421,13 @@ extension ZLRecordView {
         
 //        let generatro = UIImpactFeedbackGenerator(style: UIImpactFeedbackGenerator.FeedbackStyle.medium)
 //        generatro.impactOccurred()
-        notification.notificationOccurred(.error)
-
+  
+        if deviceOldThan(device: 9) {
+            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
+        } else {
+            notification.notificationOccurred(.error)
+        }
+    
         print("~~~~~~~ready Start -----0")
         //1.avoid tap twice
         let curDate = NSDate.init()
@@ -630,8 +635,11 @@ extension ZLRecordView {
         }
         resetRecordButtonTarget()
         resetFinishStatusView()
-        notification.notificationOccurred(.success)
-
+        if deviceOldThan(device: 9) {
+            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
+        } else {
+            notification.notificationOccurred(.success)
+        }
     }
     
      //MARK: == handle recode voice && send voice
