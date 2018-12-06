@@ -388,7 +388,6 @@ class ZLRecordView: UIView {
     //MARK: == Actions
     @objc func closeRightTipView() {
         if rightTipView.isHidden == false {
-            UIView.animate(withDuration: 1, animations: {
                 self.rightTipView.alpha = 0
             }, completion: { (finish) in
                 if self.rightTipView.alpha == 0 {
@@ -442,7 +441,7 @@ extension ZLRecordView {
         } else {
             notification.notificationOccurred(.error)
         }
-    
+        isStarted = false
         print("~~~~~~~ready Start -----0")
         //1.avoid tap twice
         let curDate = NSDate.init()
@@ -450,7 +449,6 @@ extension ZLRecordView {
             print("tap time Gap : \(curDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970)")
             if (curDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970 < 0.5) {
                 startDate = curDate
-                isStarted = false
                 return
             }
         }
