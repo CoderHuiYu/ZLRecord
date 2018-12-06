@@ -10,6 +10,7 @@ import UIKit
 import AVFoundation
 import Foundation
 import QuartzCore
+import AudioToolbox
 
 let kFloatRecordImageUpTime  = 0.5
 let kFloatRecordImageRotateTime = 0.17
@@ -21,6 +22,7 @@ let kFloatLockViewHeight : CGFloat  = 120.0
 let kFloatLockViewWidth : CGFloat  = 40.0
 let commonBlueColor : UIColor = UIColor.init(red: 50/255.0, green: 146/255.0, blue: 244/255.0, alpha: 1)
 let kFloatSentButtonWidth : CGFloat = 30
+var sysID:SystemSoundID = 0
 
 @objc protocol ZLRecordViewProtocol: NSObjectProtocol{
     //return the recode voice data
@@ -378,12 +380,25 @@ class ZLRecordView: UIView {
             return super.hitTest(point, with: event)
         }
     }
+    
+    deinit{
+        //release service
+        AudioServicesDisposeSystemSoundID(sysID)
+    }
 }
 
 extension ZLRecordView {
     //MARK: == handle : click the recordButton and it's status
     // 0 start record
     @objc func recordStartRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
+        let tipMusicPath = Bundle.main.path(forResource: "send_message", ofType: "m4a")
+        if let path = tipMusicPath {
+            let tipMusicUrl = URL(fileURLWithPath: path)
+            AudioServicesCreateSystemSoundID(tipMusicUrl as CFURL, &sysID)
+            AudioServicesPlayAlertSound(SystemSoundID(sysID))
+        }
+        let generatro = UIImpactFeedbackGenerator(style: UIImpactFeedbackGenerator.FeedbackStyle.medium)
+        generatro.impactOccurred()
 //        print("~~~~~~~ready Start -----0")
         //1.avoid tap twice
         let curDate = NSDate.init()
