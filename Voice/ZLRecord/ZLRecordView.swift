@@ -128,13 +128,20 @@ class ZLRecordView: UIView {
         tipLabel.font = UIFont.systemFont(ofSize: 14)
         tipLabel.sizeToFit()
         
-        let cancelImageNormal = UIImage(named: "inline_audio_cancel_normal")
-        let cancelImageHighlighted = UIImage(named: "inline_audio_cancel_pressed")
-//        let cancelImageHighlighted = UIImage(named: "ic_ptt_lock_body")
+        let cancelButtonBGView = UIView()
+        cancelButtonBGView.backgroundColor = UIColor.white
+        cancelButtonBGView.tintColor = commonBlueColor
+        
+        var cancelImageNormal = UIImage(named: "btn_cancel")
+        cancelImageNormal = cancelImageNormal?.withRenderingMode(UIImage.RenderingMode.alwaysTemplate)
+//        let cancelImageHighlighted = UIImage(named: "inline_audio_cancel_pressed")
         let closeButton = UIButton()
         closeButton.setImage(cancelImageNormal, for: .normal)
-        closeButton.setImage(cancelImageHighlighted, for: .highlighted)
+        closeButton.tintColor = commonBlueColor
+//        closeButton.setImage(cancelImageHighlighted, for: .highlighted)
         closeButton.addTarget(self, action: #selector(closeRightTipView), for: .touchUpInside)
+        cancelButtonBGView.addSubview(closeButton)
+    
         
         let spinnerView = UIImageView()
         spinnerView.tintColor = commonBlueColor
@@ -147,11 +154,14 @@ class ZLRecordView: UIView {
         let tipViewHeight = CGFloat(40)
         rightTipView.frame = CGRect(x: kScreenWidth - tipViewWidth - 5, y: -tipViewHeight + 5, width: tipViewWidth, height: tipViewHeight)
         tipLabel.frame = CGRect(x: 10, y: tipViewHeight/2 - tipLabel.frame.size.height/2, width: tipLabel.frame.size.width, height: tipLabel.frame.size.height)
-        closeButton.frame = CGRect(x: tipLabel.frame.maxX + 10, y: tipViewHeight/2 - 24.0/2, width: 24, height: 24)
+        cancelButtonBGView.frame = CGRect(x: tipLabel.frame.maxX + 10, y: tipViewHeight/2 - 18.0/2, width: 18, height: 18)
+        closeButton.frame = CGRect(x: 2, y: 2, width: 14, height: 14)
+//        closeButton.center = cancelButtonBGView.center
+        cancelButtonBGView.layer.cornerRadius = cancelButtonBGView.frame.size.width/2
+
         spinnerView.frame = CGRect(x: tipViewWidth - 33, y: 25, width: spinnerView.frame.size.width, height: spinnerView.frame.size.height)
-        
         rightTipView.addSubview(tipLabel)
-        rightTipView.addSubview(closeButton)
+        rightTipView.addSubview(cancelButtonBGView)
         rightTipView.addSubview(spinnerView)
         
         let tap = UITapGestureRecognizer()
@@ -418,8 +428,6 @@ extension ZLRecordView {
     // 0 start record
     @objc func recordStartRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
         startPlayMusic(musicName: "send_message")
-    
-        
 //        let generatro = UIImpactFeedbackGenerator(style: UIImpactFeedbackGenerator.FeedbackStyle.medium)
 //        generatro.impactOccurred()
   
@@ -520,6 +528,7 @@ extension ZLRecordView {
     
     //2.finish Record Voice
     @objc func recordFinishRecordVoice(){
+        
         print("~~~~~~~recordFinish-----0")
         finishDate = NSDate.init()
         print("tap release :gapTime:\(finishDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970)")
@@ -629,6 +638,7 @@ extension ZLRecordView {
     
     //ended record
     func recordEnded()  {
+        startPlayMusic(musicName: "send_message")
         if (playTimer != nil || recorder != nil) {
             recorder?.stop()
             playTimer?.invalidate()
