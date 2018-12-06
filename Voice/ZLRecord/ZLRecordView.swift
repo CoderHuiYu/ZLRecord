@@ -206,7 +206,6 @@ class ZLRecordView: UIView {
         leftTipImageView.isHidden = false
         
         let shimmerViewFrame = CGRect(x: 100, y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
-        
         UIView.animate(withDuration: 0.5, delay: 0.0, options: UIView.AnimationOptions.curveLinear, animations: {
             self.shimmerView.frame = shimmerViewFrame
         }, completion: nil)
@@ -370,7 +369,7 @@ extension ZLRecordView {
         //3.ready to record
         leftTipImageView.tintColor = UIColor.lightGray
         playTime = 0
-       
+        showSliderView()
         startRecord()
     }
     
@@ -465,14 +464,15 @@ extension ZLRecordView {
    
     //MARK: == record status: 1.start 2.cancel 3.end
     func startRecord() {
+       
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.3) {
            print("1--readyRecord")
             let timeGap : TimeInterval = (self.finishDate.timeIntervalSince1970 - self.startDate!.timeIntervalSince1970)
             //if timeGap < 0.3 表示手势点击后抬起 不执行任何操作
             print("judge timeGap can record:\(timeGap)")
             if (timeGap <= 0.3) && (timeGap > 0){
-//                self.recorder?.stop()
-//                self.recorder?.deleteRecording()
+                self.resetLeftTipImageView()
+                self.resetShimmerView()
                 return
             }
             let audioSession = AVAudioSession.sharedInstance()
@@ -509,9 +509,8 @@ extension ZLRecordView {
             self.isStarted = true
             self.isCanceled = false
             //2.start execut the animation
-            self.showSliderView()
-            self.timeLabel.isHidden = false
             self.leftTipImageView.tintColor = UIColor.red
+            self.timeLabel.isHidden = false
             //3.show the animation
             self.showleftTipImageViewGradient()
             self.recorder?.record()
