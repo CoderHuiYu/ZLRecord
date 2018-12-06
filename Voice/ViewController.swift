@@ -23,7 +23,7 @@ class ViewController: UIViewController ,AVAudioRecorderDelegate{
     lazy var playBtn: UIButton = {
         let playBtn = UIButton()
         playBtn.setTitle("play", for: .normal)
-        playBtn.frame = CGRect(x: (UIScreen.main.bounds.size.width-60)/2, y: 230, width: 60, height: 60)
+        playBtn.frame = CGRect(x: (UIScreen.main.bounds.size.width-60)/2, y: 100, width: 60, height: 60)
         playBtn.layer.cornerRadius = 30
         playBtn.layer.masksToBounds = true
         playBtn.addTarget(self, action: #selector(playBtnClick(_:)), for: .touchUpInside)
@@ -40,7 +40,7 @@ class ViewController: UIViewController ,AVAudioRecorderDelegate{
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor.init(red: 245/255.0, green: 245/255.0, blue: 245/255.0, alpha: 1)
+        view.backgroundColor = RGBColor(r: 220, g: 220, b: 220)
         view.addSubview(playBtn)
         view.addSubview(recordView)
 //        view.addSubview(lockView)

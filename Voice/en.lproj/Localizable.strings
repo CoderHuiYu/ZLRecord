@@ -7,4 +7,5 @@
 */
 "ZL_SWIPE_TO_CANCEL"            =       "slide to cancel";
 "ZL_CANCEL"                     =       "Cancel";
+"ZL_TOSHORT_VOICE"              =       "Message too short";
 "ZL_RECORD_TAP_NOTICE"          =       "Hold to record,release to send.";
