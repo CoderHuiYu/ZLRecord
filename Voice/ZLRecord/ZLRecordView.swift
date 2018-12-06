@@ -23,6 +23,8 @@ let kFloatLockViewWidth : CGFloat  = 40.0
 let commonBlueColor : UIColor = UIColor.init(red: 50/255.0, green: 146/255.0, blue: 244/255.0, alpha: 1)
 let kFloatSentButtonWidth : CGFloat = 30
 var sysID:SystemSoundID = 0
+let notification = UINotificationFeedbackGenerator()
+
 //private var avPlayer:AVAudioPlayer!
 
 @objc protocol ZLRecordViewProtocol: NSObjectProtocol{
@@ -415,8 +417,12 @@ extension ZLRecordView {
     // 0 start record
     @objc func recordStartRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
         startPlayMusic(musicName: "send_message")
-        let generatro = UIImpactFeedbackGenerator(style: UIImpactFeedbackGenerator.FeedbackStyle.medium)
-        generatro.impactOccurred()
+    
+        
+//        let generatro = UIImpactFeedbackGenerator(style: UIImpactFeedbackGenerator.FeedbackStyle.medium)
+//        generatro.impactOccurred()
+        notification.notificationOccurred(.error)
+
         print("~~~~~~~ready Start -----0")
         //1.avoid tap twice
         let curDate = NSDate.init()
@@ -545,7 +551,7 @@ extension ZLRecordView {
             }
             let audioSession = AVAudioSession.sharedInstance()
             do {
-                try audioSession.setCategory(.playAndRecord, mode: .default, options:[.allowBluetooth,.allowBluetoothA2DP])
+                try audioSession.setCategory(.playAndRecord, mode: .default, options:[.allowBluetooth,.allowBluetoothA2DP,.defaultToSpeaker])
             } catch let err{
                 print("set type fail:\(err.localizedDescription)")
                 return
@@ -624,6 +630,8 @@ extension ZLRecordView {
         }
         resetRecordButtonTarget()
         resetFinishStatusView()
+        notification.notificationOccurred(.success)
+
     }
     
      //MARK: == handle recode voice && send voice
