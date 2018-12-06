@@ -388,14 +388,9 @@ class ZLRecordView: UIView {
     //MARK: == Actions
     @objc func closeRightTipView() {
         if rightTipView.isHidden == false {
-            UIView.animate(withDuration: 1, animations: {
+            UIView.animate(withDuration: 1) {
                 self.rightTipView.alpha = 0
-            }, completion: { (finish) in
-                if self.rightTipView.alpha == 0 {
-                    self.rightTipView.isHidden = true
-                    self.rightTipView.alpha = 1
-                }
-            })
+            }
         }
     }
     
@@ -403,12 +398,13 @@ class ZLRecordView: UIView {
         
         if rightTipView.isHidden {
             self.rightTipView.isHidden = false
+            self.rightTipView.alpha = 1
             DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 2) {
                 UIView.animate(withDuration: 1, animations: {
                     self.rightTipView.alpha = 0
                 }, completion: { (finish) in
                      self.rightTipView.isHidden = true
-                    self.rightTipView.alpha = 1
+                     self.rightTipView.alpha = 1
                 })
                
             }
