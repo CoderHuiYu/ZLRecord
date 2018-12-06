@@ -113,6 +113,53 @@ class ZLRecordView: UIView {
         return recordButton
     }()
     
+    lazy var rightTipView: UIView = {
+        let rightTipView = UIView()
+        rightTipView.backgroundColor = commonBlueColor
+        rightTipView.layer.cornerRadius = 12
+        
+        let tipLabel = UILabel()
+        tipLabel.text = NSLocalizedString("ZL_RECORD_TAP_NOTICE", comment: "notice")
+        tipLabel.textColor = UIColor.white
+        tipLabel.font = UIFont.systemFont(ofSize: 14)
+        tipLabel.sizeToFit()
+        
+        
+        let cancelImageNormal = UIImage(named: "inline_audio_cancel_normal")
+        let cancelImageHighlighted = UIImage(named: "inline_audio_cancel_pressed")
+//        let cancelImageHighlighted = UIImage(named: "ic_ptt_lock_body")
+        let closeButton = UIButton()
+        closeButton.setImage(cancelImageNormal, for: .normal)
+        closeButton.setImage(cancelImageHighlighted, for: .highlighted)
+        closeButton.addTarget(self, action: #selector(closeRightTipView), for: .touchUpInside)
+        
+        let spinnerView = UIImageView()
+        spinnerView.tintColor = commonBlueColor
+        var spinnerImage = UIImage(named: "abc_spinner_mtrl_am_alpha")
+        spinnerImage = spinnerImage?.withRenderingMode(UIImage.RenderingMode.alwaysTemplate)
+        spinnerView.image = spinnerImage
+        spinnerView.sizeToFit()
+        
+        let tipViewWidth = 10 + tipLabel.frame.size.width + 10 + 20 + 10
+        let tipViewHeight = CGFloat(40)
+        
+        rightTipView.frame = CGRect(x: kScreenWidth - tipViewWidth - 5, y: -tipViewHeight + 5, width: tipViewWidth, height: tipViewHeight)
+        tipLabel.frame = CGRect(x: 10, y: tipViewHeight/2 - tipLabel.frame.size.height/2, width: tipLabel.frame.size.width, height: tipLabel.frame.size.height)
+        closeButton.frame = CGRect(x: tipLabel.frame.maxX + 10, y: tipViewHeight/2 - 24.0/2, width: 24, height: 24)
+        
+        spinnerView.frame = CGRect(x: tipViewWidth - 33, y: 25, width: spinnerView.frame.size.width, height: spinnerView.frame.size.height)
+        
+        rightTipView.addSubview(tipLabel)
+        rightTipView.addSubview(closeButton)
+        rightTipView.addSubview(spinnerView)
+        
+        let tap = UITapGestureRecognizer()
+        tap.addTarget(self, action: #selector(closeRightTipView))
+        rightTipView.addGestureRecognizer(tap)
+        rightTipView.isHidden = true
+        return rightTipView
+    }()
+    
     func resetRecordButtonTarget() {
         recordButton.addTarget(self, action: #selector(recordStartRecordVoice(sender:event:)), for: .touchDown)
         recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragInside)
@@ -174,6 +221,7 @@ class ZLRecordView: UIView {
         addSubview(recordButton)
         addSubview(sendButton)
         addSubview(cancelButton)
+        addSubview(rightTipView)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -379,7 +427,25 @@ class ZLRecordView: UIView {
 //        let zlSliderView : ZLSlideView = self.shimmerView.contentView as! ZLSlideView
 //        zlSliderView.resetFrame()
     }
-    
+    //MARK: == Actions
+    @objc func closeRightTipView() {
+        if rightTipView.isHidden {
+            return
+        }
+        
+        
+    }
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        if point.y < 0 && point.y > -40 {
+            return rightTipView
+            
+        } else {
+            return super.hitTest(point, with: event)
+        }
+        
+      
+        
+    }
 }
 
 
