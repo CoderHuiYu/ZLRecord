@@ -18,6 +18,7 @@
 		0CEDD08021B144B300F9050E /* ShimmeringMaskLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CEDD07C21B144B300F9050E /* ShimmeringMaskLayer.swift */; };
 		0CEDD08321B1463400F9050E /* ZLGarbageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CEDD08221B1463400F9050E /* ZLGarbageView.swift */; };
 		691820D921B7AB8D000D1F7E /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 691820DB21B7AB8D000D1F7E /* Localizable.strings */; };
+		69A6D15621B91176005E670A /* send_message.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 69A6D15521B91176005E670A /* send_message.m4a */; };
 		69E5A6FC21B66BC60001156C /* Common.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69E5A6FB21B66BC60001156C /* Common.swift */; };
 		FED6DFF421AD22C300F8943F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED6DFF321AD22C300F8943F /* AppDelegate.swift */; };
 		FED6DFF621AD22C300F8943F /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED6DFF521AD22C300F8943F /* ViewController.swift */; };
@@ -41,6 +42,7 @@
 		691820DE21B7AC5D000D1F7E /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Main.strings"; sourceTree = "<group>"; };
 		691820DF21B7AC5E000D1F7E /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/LaunchScreen.strings"; sourceTree = "<group>"; };
 		691820E021B7AC5E000D1F7E /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		69A6D15521B91176005E670A /* send_message.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = send_message.m4a; sourceTree = "<group>"; };
 		69E5A6FB21B66BC60001156C /* Common.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Common.swift; sourceTree = "<group>"; };
 		FED6DFF021AD22C300F8943F /* Voice.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Voice.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FED6DFF321AD22C300F8943F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -87,6 +89,14 @@
 			path = ZLRecord;
 			sourceTree = "<group>";
 		};
+		69A6D15321B90A61005E670A /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				69A6D15521B91176005E670A /* send_message.m4a */,
+			);
+			path = Source;
+			sourceTree = "<group>";
+		};
 		FED6DFE721AD22C300F8943F = {
 			isa = PBXGroup;
 			children = (
@@ -106,6 +116,7 @@
 		FED6DFF221AD22C300F8943F /* Voice */ = {
 			isa = PBXGroup;
 			children = (
+				69A6D15321B90A61005E670A /* Source */,
 				0CEDD08121B1456400F9050E /* ZLRecord */,
 				0CEDD07821B144B300F9050E /* Shimmer */,
 				FED6DFF321AD22C300F8943F /* AppDelegate.swift */,
@@ -179,6 +190,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FED6DFFE21AD22C400F8943F /* LaunchScreen.storyboard in Resources */,
+				69A6D15621B91176005E670A /* send_message.m4a in Resources */,
 				691820D921B7AB8D000D1F7E /* Localizable.strings in Resources */,
 				FED6DFFB21AD22C400F8943F /* Assets.xcassets in Resources */,
 				FED6DFF921AD22C300F8943F /* Main.storyboard in Resources */,
@@ -364,7 +376,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = T55GAY3536;
+				DEVELOPMENT_TEAM = DQRZ4JBLWE;
 				INFOPLIST_FILE = Voice/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -383,7 +395,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = T55GAY3536;
+				DEVELOPMENT_TEAM = DQRZ4JBLWE;
 				INFOPLIST_FILE = Voice/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (

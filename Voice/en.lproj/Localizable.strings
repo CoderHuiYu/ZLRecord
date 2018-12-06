@@ -5,6 +5,7 @@
   Created by zhoukai on 2018/12/5.
   Copyright © 2018 Tyoung. All rights reserved.
 */
-"ZL_SWIPE_TO_CANCEL"            =       "Swipe to cancel";
+"ZL_SWIPE_TO_CANCEL"            =       "slide to cancel";
 "ZL_CANCEL"                     =       "Cancel";
 "ZL_TOSHORT_VOICE"              =       "Message too short";
+"ZL_RECORD_TAP_NOTICE"          =       "Hold to record,release to send.";
