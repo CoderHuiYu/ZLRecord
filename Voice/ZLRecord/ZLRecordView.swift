@@ -638,7 +638,7 @@ extension ZLRecordView {
     
     //ended record
     func recordEnded()  {
-        startPlayMusic(musicName: "send_message")
+//        startPlayMusic(musicName: "send_message")
         if (playTimer != nil || recorder != nil) {
             recorder?.stop()
             playTimer?.invalidate()
@@ -646,11 +646,7 @@ extension ZLRecordView {
         }
         resetRecordButtonTarget()
         resetFinishStatusView()
-        if deviceOldThan(device: 9) {
-            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
-        } else {
-            notification.notificationOccurred(.success)
-        }
+ 
     }
     
      //MARK: == handle recode voice && send voice
@@ -696,6 +692,7 @@ extension ZLRecordView: AVAudioRecorderDelegate{
         let pathUrl = URL(fileURLWithPath: path)
         AudioServicesCreateSystemSoundID(pathUrl as CFURL, &sysID)
         AudioServicesPlaySystemSound(sysID)
+
 //        AudioServicesPlayAlertSound(sysID)
 //        do {
 //            try avPlayer = AVAudioPlayer(contentsOf: pathUrl)
@@ -710,6 +707,12 @@ extension ZLRecordView: AVAudioRecorderDelegate{
         do{
             let audioData = try  NSData(contentsOfFile: url.path, options: [])
             if isFinished && (isCanceled == false) && (timeCount >= 1) {
+                AudioServicesPlaySystemSound(1003)
+                if deviceOldThan(device: 9) {
+                    AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
+                } else {
+                    notification.notificationOccurred(.success)
+                }
                 isFinished = false
                 timeCount = 0
                 self.delegate?.zlRecordFinishRecordVoice(didFinishRecode: audioData)
