@@ -202,12 +202,15 @@ class ZLRecordView: UIView {
     }()
     
     lazy var timeLabel:UILabel = {
-        let timeLabel = UILabel.init(frame: CGRect.init(x: 45 , y: 0, width: 60, height: self.frame.height))
+        let timeLabel = UILabel()//.init(frame: CGRect.init(x: 45 , y: 0, width: 0, height: self.frame.height))
         timeLabel.textColor = UIColor.black
         timeLabel.backgroundColor = self.backgroundColor
         timeLabel.text = "0:00"
+        timeLabel.translatesAutoresizingMaskIntoConstraints = false
+        timeLabel.heightAnchor.constraint(equalToConstant: self.frame.height).isActive = true
         timeLabel.font = UIFont.systemFont(ofSize: 18)
-        timeLabel.isHidden = true
+//        timeLabel.isHidden = true
+        timeLabel.alpha = 0
         return timeLabel
     }()
     
@@ -232,6 +235,7 @@ class ZLRecordView: UIView {
         addSubview(leftTipImageView)
         addSubview(garbageView)
         addSubview(timeLabel)
+        timeLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 45).isActive = true
         addSubview(recordButton)
         addSubview(sendButton)
         addSubview(cancelButton)
@@ -354,7 +358,8 @@ class ZLRecordView: UIView {
     }
     
     func resetTimeLabel() {
-        timeLabel.isHidden = true
+//        timeLabel.isHidden = true
+        timeLabel.alpha = 0
         timeLabel.text = "0:00"
     }
     
@@ -442,14 +447,16 @@ extension ZLRecordView {
         print("~~~~~~~ready Start -----0")
         //1.avoid tap twice
         let curDate = NSDate.init()
-        if startDate != nil {
-            print("tap time Gap : \(curDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970)")
-            if (curDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970 < 0.5) {
-                startDate = curDate
+        if let startDate = startDate {
+            let timeGap = curDate.timeIntervalSince(startDate as Date)
+            print("tap time Gap : \(timeGap)")
+            if (timeGap < 0.5) {
+                self.startDate = curDate
                 return
             }
         }
         print("~~~~~~~ready Start -----1")
+        showSliderView()
         startDate = curDate
         //2.get the trackPoint
         let touch : UITouch = (eventA.touches(for: senderA)?.first)!
@@ -458,8 +465,10 @@ extension ZLRecordView {
         //3.ready to record
         leftTipImageView.tintColor = UIColor.lightGray
         playTime = 0
-        showSliderView()
-        startRecord()
+       
+        DispatchQueue.main.async {
+            self.startRecord()
+        }
     }
     
     //1. recordMayCancel
@@ -564,7 +573,10 @@ extension ZLRecordView {
             self.resetShimmerView()
             return
         }
-        self.timeLabel.isHidden = false
+        UIView.animate(withDuration: 1) {
+            self.timeLabel.alpha = 1
+        }
+    
         let audioSession = AVAudioSession.sharedInstance()
         do {
             try audioSession.setCategory(.playAndRecord, mode: .default, options:[.allowBluetooth,.allowBluetoothA2DP,.defaultToSpeaker])
@@ -683,7 +695,6 @@ extension ZLRecordView {
                 self.show("\(60 - recordTime)")
             }
         }
-        
     }
 }
 
