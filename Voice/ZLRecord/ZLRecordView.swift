@@ -358,9 +358,8 @@ class ZLRecordView: UIView {
     }
     
     func resetTimeLabel() {
-//        timeLabel.isHidden = true
-        timeLabel.alpha = 0
         timeLabel.text = "0:00"
+        timeLabel.alpha = 0
     }
     
     func resetCancelButton() {
@@ -457,6 +456,13 @@ extension ZLRecordView {
         }
         print("~~~~~~~ready Start -----1")
         showSliderView()
+        
+        let basicAnimtion: CABasicAnimation = CABasicAnimation.init(keyPath: "opacity")
+        basicAnimtion.duration = 0.3
+        basicAnimtion.fromValue = 0
+        basicAnimtion.toValue = 1
+        timeLabel.layer.add(basicAnimtion, forKey: "opacity")
+        timeLabel.alpha = 1
         startDate = curDate
         //2.get the trackPoint
         let touch : UITouch = (eventA.touches(for: senderA)?.first)!
@@ -541,8 +547,9 @@ extension ZLRecordView {
         
         print("~~~~~~~recordFinish-----0")
         finishDate = NSDate.init()
-        print("tap release :gapTime:\(finishDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970)")
-        if finishDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970 < 1 {
+        let timeGap = finishDate.timeIntervalSince(startDate! as Date)
+        print("tap release :gapTime:\(timeGap)")
+        if timeGap < 2 {
             UIView.animate(withDuration: 1) {
                 self.showRightTipView()
             }
@@ -569,14 +576,11 @@ extension ZLRecordView {
         //if timeGap < 0.3 表示手势点击后抬起 不执行任何操作
         print("judge timeGap can record:\(timeGap)")
         if (timeGap <= 0.3) && (timeGap > 0){
+            self.timeLabel.alpha = 0
             self.resetLeftTipImageView()
             self.resetShimmerView()
             return
         }
-        UIView.animate(withDuration: 1) {
-            self.timeLabel.alpha = 1
-        }
-    
         let audioSession = AVAudioSession.sharedInstance()
         do {
             try audioSession.setCategory(.playAndRecord, mode: .default, options:[.allowBluetooth,.allowBluetoothA2DP,.defaultToSpeaker])
