@@ -12,20 +12,21 @@ import Foundation
 import QuartzCore
 import AudioToolbox
 
-let kFloatSliderShowTime : Double = 0.2
+let kFloatSliderShowTime : Double = 0.3
+let kFloatSliderDissppearTime : Double = 0.2
 let kFloatRecordImageUpTime  = 0.5
 let kFloatRecordImageRotateTime = 0.17
 let kFloatRecordImageDownTime = 0.5
 let kFloatGarbageAnimationTime = 0.3
 let kFloatGarbageBeginY : CGFloat = 45.0
-let kFloatCancelRecordingOffsetX  : CGFloat = 100.0
+let kFloatCancelRecordingOffsetX  : CGFloat = 120.0
 let kFloatLockViewHeight : CGFloat  = 120.0
 let kFloatLockViewWidth : CGFloat  = 40.0
 let commonBlueColor : UIColor = UIColor.init(red: 50/255.0, green: 146/255.0, blue: 244/255.0, alpha: 1)
 let kFloatSentButtonWidth : CGFloat = 30
 var sysID:SystemSoundID = 0
+let startPoint : CGPoint = CGPoint.init(x: kScreenWidth - 120, y: 20)
 let notification = UINotificationFeedbackGenerator()
-
 //private var avPlayer:AVAudioPlayer!
 
 @objc protocol ZLRecordViewProtocol: NSObjectProtocol{
@@ -44,18 +45,27 @@ class ZLRecordView: UIView {
     
     var voiceData: NSData?
     weak var delegate: ZLRecordViewProtocol?
-    var startDate : NSDate?
-    var finishDate : NSDate = NSDate.init()
+    var startDate : Date?
+    var curFinishDate : Date = Date.init()
+    var lastFinishDate :Date?
+    
+    enum State { case closed, opening, open, closing }
+    private var state: State = .closed
+    
     var trackTouchPoint : CGPoint?
     var firstTouchPoint : CGPoint?
     var timeCount : Int = 0
     var shimmerWidth :CGFloat = 0.0
+    var _shimmerView : ShimmeringView?
+    var _beatImageView : UIImageView?
+    var _timeLabel : UILabel?
+    
     
     var isStarted : Bool = false
     var isCanceled : Bool = false      //is canceled
     var isFinished : Bool = false
     
-    //MARK: == init the view
+    //MARK: ============ init the view
     lazy var placeholdLabel : UILabel = {
         let placeholdLabel = UILabel.init(frame: CGRect.init(x: 0, y: 0, width: 40, height: self.frame.height))
         placeholdLabel.backgroundColor = self.backgroundColor
@@ -93,20 +103,7 @@ class ZLRecordView: UIView {
         return btn
     }()
     
-    lazy var shimmerView :ShimmeringView = {
-        let textString = NSLocalizedString("ZL_SWIPE_TO_CANCEL", comment: "Swipe to cancel")
-        shimmerWidth = self.getStringWidth(string: textString, font: UIFont.systemFont(ofSize: kLabelFont)) + 30
-        let shimmerView = ShimmeringView.init(frame: CGRect.init(x: (kScreenWidth - shimmerWidth)/2 + kScreenWidth, y: 0, width: shimmerWidth, height: self.frame.size.height))
-        
-        let zlSliderView = ZLSlideView.init(frame: shimmerView.bounds)
-        shimmerView.contentView = zlSliderView
-        shimmerView.shimmerDirection = .left
-        shimmerView.shimmerSpeed = 60
-        shimmerView.shimmerAnimationOpacity = 0.3
-        shimmerView.shimmerPauseDuration = 0.2
-        shimmerView.isShimmering = true
-        return shimmerView
-    }()
+    
     
     lazy var recordButton: UIButton = {
         let recordButton = UIButton.init(frame: CGRect(x: frame.size.width-self.frame.size.height, y: 0, width: self.frame.size.height, height: self.frame.size.height))        
@@ -176,6 +173,7 @@ class ZLRecordView: UIView {
     }()
     
     func resetRecordButtonTarget() {
+        
         recordButton.addTarget(self, action: #selector(recordStartRecordVoice(sender:event:)), for: .touchDown)
         recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragInside)
         recordButton.addTarget(self, action: #selector(recordMayCancelRecordVoice(sender:event:)), for: .touchDragOutside)
@@ -184,35 +182,57 @@ class ZLRecordView: UIView {
         recordButton.addTarget(self, action: #selector(recordFinishRecordVoice), for: .touchUpOutside)
     }
     
-    lazy var leftTipImageView : UIImageView  = {
-        let leftTipImageView = UIImageView.init(frame: CGRect.init(x:8, y: self.frame.size.height/2 - 28/2, width: 28 , height: 28))
-        var leftTipImage =  UIImage.init(named: "button_mic_white")
-        leftTipImage = leftTipImage?.withRenderingMode(UIImage.RenderingMode.alwaysTemplate)
-        leftTipImageView.image = leftTipImage
-        leftTipImageView.contentMode = .scaleAspectFit
-        leftTipImageView.isHidden = true
-        leftTipImageView.tintColor = UIColor.lightGray
-        return leftTipImageView
-    }()
+    var beatImageView : UIImageView  {
+        if _beatImageView == nil {
+            _beatImageView = UIImageView.init(frame: CGRect.init(x:8, y: self.frame.size.height/2 - 28/2, width: 28 , height: 28))
+            var leftTipImage =  UIImage.init(named: "button_mic_white")
+            leftTipImage = leftTipImage?.withRenderingMode(UIImage.RenderingMode.alwaysTemplate)
+            _beatImageView?.image = leftTipImage
+            _beatImageView?.contentMode = .scaleAspectFit
+            _beatImageView?.tintColor = UIColor.lightGray
+            _beatImageView?.isHidden = true
+        }
+        return _beatImageView!
+    }
+    
+    var shimmerView :ShimmeringView {
+        if _shimmerView == nil {
+            let textString = NSLocalizedString("ZL_SWIPE_TO_CANCEL", comment: "Swipe to cancel")
+            shimmerWidth = self.getStringWidth(string: textString, font: UIFont.systemFont(ofSize: kLabelFont)) + 30
+            _shimmerView = ShimmeringView.init(frame: CGRect.init(x: (kScreenWidth - shimmerWidth)/2, y: 0, width: shimmerWidth, height: self.frame.size.height))
+            
+            let zlSliderView = ZLSlideView.init(frame: _shimmerView!.bounds)
+            _shimmerView?.contentView = zlSliderView
+            _shimmerView?.shimmerDirection = .left
+            _shimmerView?.shimmerSpeed = 60
+            _shimmerView?.shimmerAnimationOpacity = 0.3
+            _shimmerView?.shimmerPauseDuration = 0.2
+            _shimmerView?.isShimmering = true
+            _shimmerView?.isHidden = true
+        }
+        return _shimmerView!
+    }
     
     lazy var garbageView : ZLGarbageView = {
-        let garbageView = ZLGarbageView.init(frame: CGRect.init(x: self.leftTipImageView.center.x - 15/2, y: kFloatGarbageBeginY, width: 30, height: self.frame.height))
+        let garbageView = ZLGarbageView.init(frame: CGRect.init(x: self.beatImageView.center.x - 15/2, y: kFloatGarbageBeginY, width: 30, height: self.frame.height))
         garbageView.isHidden = true
         return garbageView
     }()
     
-    lazy var timeLabel:UILabel = {
-        let timeLabel = UILabel()//.init(frame: CGRect.init(x: 45 , y: 0, width: 0, height: self.frame.height))
-        timeLabel.textColor = UIColor.black
-        timeLabel.backgroundColor = self.backgroundColor
-        timeLabel.text = "0:00"
-        timeLabel.translatesAutoresizingMaskIntoConstraints = false
-        timeLabel.heightAnchor.constraint(equalToConstant: self.frame.height).isActive = true
-        timeLabel.font = UIFont.systemFont(ofSize: 18)
-//        timeLabel.isHidden = true
-        timeLabel.alpha = 0
-        return timeLabel
-    }()
+    var timeLabel:UILabel {
+        if  _timeLabel == nil {
+            _timeLabel = UILabel.init(frame: CGRect.init(x: 45 , y: 0, width: 45, height: self.frame.height))
+            _timeLabel?.textColor = UIColor.black
+            _timeLabel?.backgroundColor = self.backgroundColor
+            _timeLabel?.text = "0:00"
+            _timeLabel?.translatesAutoresizingMaskIntoConstraints = false
+//            _timeLabel?.heightAnchor.constraint(equalToConstant: self.frame.height).isActive = true
+            _timeLabel?.font = UIFont.systemFont(ofSize: 18)
+            //        timeLabel.isHidden = true
+            _timeLabel?.alpha = 0
+        }
+        return _timeLabel!
+    }
     
     lazy var lockView : ZLLockView = {
         let lockView = ZLLockView.init(frame: CGRect.init(x: self.frame.size.width-kFloatLockViewWidth, y: 0, width: kFloatLockViewWidth, height: kFloatLockViewHeight))
@@ -224,21 +244,19 @@ class ZLRecordView: UIView {
         lockView.isHidden = true
         return lockView
     }()
-    
+    //MARK: ================== init frame =======
     override init(frame: CGRect) {
         super.init(frame: frame)
         isUserInteractionEnabled = true
         backgroundColor = RGBColor(r: 245, g: 245, b: 245)
-        insertSubview(lockView, belowSubview: recordButton)
-        addSubview(shimmerView)
         addSubview(placeholdLabel)
-        addSubview(leftTipImageView)
         addSubview(garbageView)
         addSubview(timeLabel)
-        timeLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 45).isActive = true
-        addSubview(recordButton)
+//        timeLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 45).isActive = true
         addSubview(sendButton)
         addSubview(cancelButton)
+        addSubview(recordButton)
+        insertSubview(lockView, belowSubview: recordButton)
         addSubview(rightTipView)
     }
     
@@ -246,7 +264,7 @@ class ZLRecordView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    //MARK: == show view and animation
+    //MARK: ============ show view and animation
     func showLockView()  {
         lockView.isHidden = false
         lockView.lockAnimationView.addAnimation()
@@ -262,8 +280,8 @@ class ZLRecordView: UIView {
     func showSliderView() {
         shimmerView.isHidden = false
         shimmerView.alpha = 1
-        leftTipImageView.alpha = 1.0;
-        leftTipImageView.isHidden = false
+        beatImageView.alpha = 1.0;
+        beatImageView.isHidden = false
         
         let shimmerViewFrame = CGRect.init(x: (kScreenWidth - shimmerWidth)/2 , y: 0, width: shimmerWidth, height: self.frame.size.height)
         UIView.animate(withDuration: kFloatSliderShowTime, delay: 0.0, options: UIView.AnimationOptions.curveLinear, animations: {
@@ -271,15 +289,15 @@ class ZLRecordView: UIView {
         }, completion: nil)
     }
     
-    //leftTipImageView layer animation
-    func showleftTipImageViewGradient() {
+    //beatImageView layer animation
+    func showbeatImageViewGradient() {
         let basicAnimtion: CABasicAnimation = CABasicAnimation.init(keyPath: "opacity")
         basicAnimtion.repeatCount = MAXFLOAT
         basicAnimtion.duration = 1.0
         basicAnimtion.autoreverses = true
         basicAnimtion.fromValue = 1.0
         basicAnimtion.toValue = 0.1
-        self.leftTipImageView.layer.add(basicAnimtion, forKey: "opacity")
+        self.beatImageView.layer.add(basicAnimtion, forKey: "opacity")
     }
     
     //show garbageView
@@ -296,23 +314,23 @@ class ZLRecordView: UIView {
     }
     
     //recordButton‘s animation :  rotate And move
-    func showLeftTipImageViewAnimation() {
-        let orgFrame = self.leftTipImageView.frame
+    func showbeatImageViewAnimation() {
+        let orgFrame = self.beatImageView.frame
         UIView.animate(withDuration: kFloatRecordImageUpTime, delay: 0.0, options: UIView.AnimationOptions.curveEaseInOut, animations: {
-            var frame = self.leftTipImageView.frame
-            frame.origin.y -= (1.5 * self.leftTipImageView.frame.height)
-            self.leftTipImageView.frame = frame;
+            var frame = self.beatImageView.frame
+            frame.origin.y -= (1.5 * self.beatImageView.frame.height)
+            self.beatImageView.frame = frame;
         }) { (finish) in
             self.showGarbage()
             UIView.animate(withDuration: kFloatRecordImageRotateTime, delay: 0.0, options: UIView.AnimationOptions.curveEaseInOut, animations: {
                 let transFormNew = CGAffineTransform.init(rotationAngle: CGFloat(-1 * Double.pi))
-                self.leftTipImageView.transform  = transFormNew
+                self.beatImageView.transform  = transFormNew
             }) { (finish) in
                 UIView.animate(withDuration: kFloatRecordImageDownTime, delay: 0.0, options: UIView.AnimationOptions.curveEaseInOut, animations: {
-                    self.leftTipImageView.frame = orgFrame
+                    self.beatImageView.frame = orgFrame
                 }) { (finish) in
-                    self.leftTipImageView.transform = CGAffineTransform.identity
-                    self.leftTipImageView.isHidden = true
+                    self.beatImageView.transform = CGAffineTransform.identity
+                    self.beatImageView.isHidden = true
                     self.dismissGarbage()
                 }
             }
@@ -328,12 +346,12 @@ class ZLRecordView: UIView {
             self.garbageView.frame = orgFrame
         }){(finish) in
             self.garbageView.isHidden = true
-            self.leftTipImageView.isHidden = true
-            self.garbageView.frame = CGRect.init(x: self.leftTipImageView.center.x - 15/2, y: kFloatGarbageBeginY, width: 30, height: self.frame.height)
+            self.beatImageView.isHidden = true
+            self.garbageView.frame = CGRect.init(x: self.beatImageView.center.x - 15/2, y: kFloatGarbageBeginY, width: 30, height: self.frame.height)
             self.resetCancelStatusView()         
         }
     }
-    
+    //MARK: ============== reset View ====
     func resetLockView() {
         lockView.isHidden = true
         lockView.resetLockViewImageTint()
@@ -342,14 +360,14 @@ class ZLRecordView: UIView {
         lockView.frame = originFrame;
     }
     
-    func resetLeftTipImageView() {
-        leftTipImageView.isHidden = true
-        leftTipImageView.frame = CGRect.init(x:8, y: self.frame.size.height/2 - 28/2, width: 28, height: 28)
-        leftTipImageView.layer.removeAllAnimations()
+    func resetbeatImageView() {
+        beatImageView.isHidden = true
+        beatImageView.frame = CGRect.init(x:8, y: self.frame.size.height/2 - 28/2, width: 28, height: 28)
+        beatImageView.layer.removeAllAnimations()
     }
     
     func resetShimmerView() {
-        let shimmerViewFrame = CGRect(x: 100 + kScreenWidth , y: 0, width: shimmerView.frame.size.width, height: shimmerView.frame.size.height)
+        let shimmerViewFrame = CGRect.init(x: (kScreenWidth - shimmerWidth)/2, y: 0, width: shimmerWidth, height: self.frame.size.height)
         self.shimmerView.frame = shimmerViewFrame
         self.shimmerView.isHidden = true
         self.shimmerView.isShimmering = true
@@ -371,7 +389,7 @@ class ZLRecordView: UIView {
         recordButton.isHidden = false
         sendButton.isHidden = true
         sendButton.isUserInteractionEnabled = true
-        resetLeftTipImageView()
+        resetbeatImageView()
         resetShimmerView()
         resetTimeLabel()
         resetLockView()
@@ -389,7 +407,7 @@ class ZLRecordView: UIView {
         resetCancelButton()
     }
     
-    //MARK: == Actions
+    //MARK: ============ Actions
     @objc func closeRightTipView() {
         if rightTipView.isHidden == false {
             UIView.animate(withDuration: 1) {
@@ -427,54 +445,110 @@ class ZLRecordView: UIView {
         //release service
         AudioServicesDisposeSystemSoundID(sysID)
     }
+    
+    
+    //MARK: ============ Tap RecordButton ---->  showView && hideView ============
+    func showViewAndAnimation() {
+        if state == .closing {
+            shimmerView.removeFromSuperview()
+            _shimmerView = nil
+            _beatImageView?.removeFromSuperview()
+            _beatImageView = nil
+        }
+        state = .opening
+        
+        insertSubview(shimmerView, belowSubview: recordButton)
+        insertSubview(beatImageView, belowSubview: recordButton)
+        self.shimmerView.isHidden = false
+        self.beatImageView.isHidden = false
+        let shimmerOrgFrame = shimmerView.frame
+        var shimmerNowFrame = shimmerView.frame
+        let beatImgViewOrgFrame = beatImageView.frame
+        var beatImgViewNowFrame = beatImageView.frame
+        shimmerNowFrame.origin.x = startPoint.x
+        beatImgViewNowFrame.origin.x = startPoint.x - (shimmerOrgFrame.minX - beatImgViewOrgFrame.maxX )
+        shimmerView.frame = shimmerNowFrame
+        beatImageView.frame = beatImgViewNowFrame
+      
+        UIView.animate(withDuration: kFloatSliderShowTime, animations: {
+            self.shimmerView.isHidden = false
+            self.beatImageView.isHidden = false
+            self.shimmerView.frame = shimmerOrgFrame
+            self.beatImageView.frame = beatImgViewOrgFrame
+        }) { (finished) in
+            if finished {
+                if self.state == .opening {
+                    DispatchQueue.main.async {
+                        self.startRecord()
+                    }
+                }
+                self.state = .open
+            }
+        }
+    }
+    
+    func hideviewAndAnimation() {
+        state = .closing
+        
+        self.timeLabel.layer.removeAllAnimations()
+        self.timeLabel.isHidden = true
+        
+        if lastFinishDate == nil {
+            lastFinishDate = curFinishDate
+            let shimmerOrgFrame = shimmerView.frame
+            var shimmerNowFrame = shimmerView.frame
+            let beatImgViewOrgFrame = beatImageView.frame
+            var beatImgViewNowFrame = beatImageView.frame
+            shimmerNowFrame.origin.x = startPoint.x
+            beatImgViewNowFrame.origin.x = startPoint.x - (shimmerOrgFrame.minX - beatImgViewOrgFrame.maxX )
+            UIView.animate(withDuration: kFloatSliderDissppearTime, delay: 0.5, options: UIView.AnimationOptions.curveLinear, animations: {
+                self.shimmerView.frame = shimmerNowFrame
+                self.beatImageView.frame = beatImgViewNowFrame
+            }) { (finish) in
+                self.state = .closed
+                if self.lastFinishDate != nil {
+                    let timeGap = self.curFinishDate.timeIntervalSince(self.lastFinishDate!)
+                    if timeGap == 0 {
+                        self.lastFinishDate = nil
+                    }
+                }
+                self.shimmerView.removeFromSuperview()
+                self._shimmerView = nil
+                self._beatImageView?.removeFromSuperview()
+                self._beatImageView = nil
+            }
+        }else{
+            state = .closed
+            self.shimmerView.removeFromSuperview()
+            self._shimmerView = nil
+            self._beatImageView?.removeFromSuperview()
+            self._beatImageView = nil
+            self.lastFinishDate = nil
+        }
+    }
 }
 
 extension ZLRecordView {
-    //MARK: == handle : click the recordButton and it's status
+    //MARK: ============ handle : click the recordButton and it's status  ============
     // 0 start record
     @objc func recordStartRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
+        print("~~~~~~~ready Start -----0")
+        startDate = Date.init()
+        isStarted = false
+        playTime = 0
         startPlayMusic(musicName: "send_message")
-        //        let generatro = UIImpactFeedbackGenerator(style: UIImpactFeedbackGenerator.FeedbackStyle.medium)
-        //        generatro.impactOccurred()
-        
         if deviceOldThan(device: 9) {
             AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
         } else {
             notification.notificationOccurred(.error)
         }
-        isStarted = false
-        print("~~~~~~~ready Start -----0")
-        //1.avoid tap twice
-        let curDate = NSDate.init()
-        if let startDate = startDate {
-            let timeGap = curDate.timeIntervalSince(startDate as Date)
-            print("tap time Gap : \(timeGap)")
-            if (timeGap < 0.5) {
-                self.startDate = curDate
-                return
-            }
-        }
-        print("~~~~~~~ready Start -----1")
-        showSliderView()
         
-        let basicAnimtion: CABasicAnimation = CABasicAnimation.init(keyPath: "opacity")
-        basicAnimtion.duration = 0.3
-        basicAnimtion.fromValue = 0
-        basicAnimtion.toValue = 1
-        timeLabel.layer.add(basicAnimtion, forKey: "opacity")
-        timeLabel.alpha = 1
-        startDate = curDate
+        showViewAndAnimation()
+        
         //2.get the trackPoint
         let touch : UITouch = (eventA.touches(for: senderA)?.first)!
         trackTouchPoint = touch.location(in: self)
         firstTouchPoint = trackTouchPoint;
-        //3.ready to record
-        leftTipImageView.tintColor = UIColor.lightGray
-        playTime = 0
-       
-        DispatchQueue.main.async {
-            self.startRecord()
-        }
     }
     
     //1. recordMayCancel
@@ -544,17 +618,17 @@ extension ZLRecordView {
     
     //2.finish Record Voice
     @objc func recordFinishRecordVoice(){
-        
-        print("~~~~~~~recordFinish-----0")
-        finishDate = NSDate.init()
-        let timeGap = finishDate.timeIntervalSince(startDate! as Date)
-        print("tap release :gapTime:\(timeGap)")
+        curFinishDate = Date.init()
+        if isCanceled == false {
+            hideviewAndAnimation()
+        }
+    
+        let timeGap = curFinishDate.timeIntervalSince(startDate!)
         if timeGap < 2 {
             UIView.animate(withDuration: 1) {
                 self.showRightTipView()
             }
         }
-        //        print("tap release :gapTime:\(finishDate.timeIntervalSince1970 - startDate!.timeIntervalSince1970)")
         guard isStarted == true else {
             return
         }
@@ -563,24 +637,12 @@ extension ZLRecordView {
         }
         self.hide()
         isFinished = true
-        
-        print("~~~~~~~recordFinish-----1")
         recordEnded()
     }
     
-    //MARK: == record status: 1.start 2.cancel 3.end
+    //MARK: ============ record status: 1.start 2.cancel 3.end
     func startRecord() {
-        
         print("1--readyRecord")
-        let timeGap : TimeInterval = (self.finishDate.timeIntervalSince1970 - self.startDate!.timeIntervalSince1970)
-        //if timeGap < 0.3 表示手势点击后抬起 不执行任何操作
-        print("judge timeGap can record:\(timeGap)")
-        if (timeGap <= 0.3) && (timeGap > 0){
-            self.timeLabel.alpha = 0
-            self.resetLeftTipImageView()
-            self.resetShimmerView()
-            return
-        }
         let audioSession = AVAudioSession.sharedInstance()
         do {
             try audioSession.setCategory(.playAndRecord, mode: .default, options:[.allowBluetooth,.allowBluetoothA2DP,.defaultToSpeaker])
@@ -609,8 +671,13 @@ extension ZLRecordView {
         } catch let err {
             print("record fail:\(err.localizedDescription)")
         }
-        
-        //             print("2--startedRecord")
+        self.timeLabel.isHidden = false
+        let basicAnimtion: CABasicAnimation = CABasicAnimation.init(keyPath: "opacity")
+        basicAnimtion.duration = 0.5
+        basicAnimtion.fromValue = 0
+        basicAnimtion.toValue = 1
+        self.timeLabel.layer.add(basicAnimtion, forKey: "opacity")
+        self.timeLabel.alpha = 1
         //1.change status to start
         self.isStarted = true
         self.isCanceled = false
@@ -618,10 +685,10 @@ extension ZLRecordView {
         
         //3.show the animation
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.2) {
-            self.leftTipImageView.tintColor = UIColor.red
-            self.showleftTipImageViewGradient()
+            self.beatImageView.tintColor = UIColor.red
+            self.showbeatImageViewGradient()
         }
-        self.showleftTipImageViewGradient()
+        self.showbeatImageViewGradient()
         self.recorder?.record()
         if self.playTimer == nil {
             self.playTimer = Timer.init(timeInterval: 1, target: self, selector: #selector(self.countVoiceTime), userInfo: nil, repeats: true)
@@ -645,7 +712,7 @@ extension ZLRecordView {
         resetRecordButtonTarget()
         resetLockView()
         //show animation
-        showLeftTipImageViewAnimation()
+        showbeatImageViewAnimation()
         //notice delegate
         guard let delegate = delegate else {
             return
@@ -668,7 +735,7 @@ extension ZLRecordView {
         
     }
     
-    //MARK: == handle recode voice && send voice
+    //MARK: ============ handle recode voice && send voice
     @objc private func sendVoice(){
         sendButton.isUserInteractionEnabled = false
         recordFinishRecordVoice()

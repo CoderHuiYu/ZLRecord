@@ -33,7 +33,7 @@ class ViewController: UIViewController ,AVAudioRecorderDelegate{
     }()
     
     lazy var recordView: ZLRecordView = {
-        let recordView = ZLRecordView(frame: CGRect(x: 0, y: UIScreen.main.bounds.size.height - 50-30, width: UIScreen.main.bounds.size.width, height: 50))
+        let recordView = ZLRecordView(frame: CGRect(x: 0, y: UIScreen.main.bounds.size.height - 150, width: UIScreen.main.bounds.size.width, height: 50))
         recordView.delegate = self
         return recordView
     }()
