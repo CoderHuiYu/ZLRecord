@@ -45,13 +45,14 @@ class ZLRecordView: UIView {
     
     var voiceData: NSData?
     weak var delegate: ZLRecordViewProtocol?
-    var startDate : Date?
+    var curStartDate : Date?
+    
     var curFinishDate : Date = Date.init()
     var lastFinishDate :Date?
     
     enum State { case closed, opening, open, closing }
     private var state: State = .closed
-    
+    private var lastState : State?
     var trackTouchPoint : CGPoint?
     var firstTouchPoint : CGPoint?
     var timeCount : Int = 0
@@ -446,7 +447,7 @@ class ZLRecordView: UIView {
     
     //MARK: ============ Tap RecordButton ---->  showView && hideView ============
     func showViewAndAnimation() {
-        print("====showViewAndAnimation====")
+        print("1====showViewAndAnimation====\(state)")
         if state == .closing {
             shimmerView.removeFromSuperview()
             _shimmerView = nil
@@ -455,6 +456,7 @@ class ZLRecordView: UIView {
         }
         state = .opening
         
+        print("2====showViewAndAnimation====\(state)")
         insertSubview(shimmerView, belowSubview: recordButton)
         insertSubview(beatImageView, belowSubview: recordButton)
         self.shimmerView.isHidden = false
@@ -467,7 +469,7 @@ class ZLRecordView: UIView {
         beatImgViewNowFrame.origin.x = startPoint.x - (shimmerOrgFrame.minX - beatImgViewOrgFrame.maxX )
         shimmerView.frame = shimmerNowFrame
         beatImageView.frame = beatImgViewNowFrame
-      
+        
         UIView.animate(withDuration: kFloatSliderShowTime, animations: {
             self.shimmerView.isHidden = false
             self.beatImageView.isHidden = false
@@ -475,8 +477,9 @@ class ZLRecordView: UIView {
             self.beatImageView.frame = beatImgViewOrgFrame
         }) { (finished) in
             if finished {
+                print("lastState\(self.state)")
                 if self.state == .opening {
-                     print("====showViewAndAnimation2====")
+                    print("3====showViewAndAnimation2====\(self.state)")
                     DispatchQueue.main.async {
                         self.startRecord()
                     }
@@ -487,11 +490,11 @@ class ZLRecordView: UIView {
     }
     
     func hideviewAndAnimation() {
+        print("1====hideviewAndAnimation")
         state = .closing
-        print("hideviewAndAnimation=====")
+        self.lastState = .closing
         self.timeLabel.layer.removeAllAnimations()
         self.timeLabel.isHidden = true
-        
         if lastFinishDate == nil {
             lastFinishDate = curFinishDate
             let shimmerOrgFrame = shimmerView.frame
@@ -500,29 +503,35 @@ class ZLRecordView: UIView {
             var beatImgViewNowFrame = beatImageView.frame
             shimmerNowFrame.origin.x = startPoint.x
             beatImgViewNowFrame.origin.x = startPoint.x - (shimmerOrgFrame.minX - beatImgViewOrgFrame.maxX )
-            UIView.animate(withDuration: kFloatSliderDissppearTime, delay: 0.5, options: UIView.AnimationOptions.curveLinear, animations: {
+            UIView.animate(withDuration: kFloatSliderDissppearTime, delay: 0.3, options: UIView.AnimationOptions.curveLinear, animations: {
                 self.shimmerView.frame = shimmerNowFrame
                 self.beatImageView.frame = beatImgViewNowFrame
-            }) { (finish) in
-                self.state = .closed
-                if self.lastFinishDate != nil {
-                    let timeGap = self.curFinishDate.timeIntervalSince(self.lastFinishDate!)
-                    if timeGap == 0 {
-                        self.lastFinishDate = nil
+            }) { (finished) in
+                if finished {
+                    if self.lastFinishDate != nil {
+                        let timeGap = self.curFinishDate.timeIntervalSince(self.lastFinishDate!)
+                        if timeGap == 0 {
+                            self.lastFinishDate = nil
+                        }
                     }
+                    print("2====hideviewAndAnimation")
+                    self.shimmerView.removeFromSuperview()
+                    self._shimmerView = nil
+                    self._beatImageView?.removeFromSuperview()
+                    self._beatImageView = nil
+                    self.state = .closed
+                    self.lastState = self.state
                 }
-                self.shimmerView.removeFromSuperview()
-                self._shimmerView = nil
-                self._beatImageView?.removeFromSuperview()
-                self._beatImageView = nil
             }
         }else{
-            state = .closed
+            print("3====hideviewAndAnimation")
             self.shimmerView.removeFromSuperview()
             self._shimmerView = nil
             self._beatImageView?.removeFromSuperview()
             self._beatImageView = nil
             self.lastFinishDate = nil
+            state = .closed
+            self.lastState = self.state
         }
     }
 }
@@ -531,10 +540,11 @@ extension ZLRecordView {
     //MARK: ============ handle : click the recordButton and it's status  ============
     // 0 start record
     @objc func recordStartRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
-        print("recordStartRecordVoice===")
-        startDate = Date.init()
+        print("===recordStartRecordVoice")
+        curStartDate = Date.init()
         isStarted = false
         playTime = 0
+        isCanceled = false
         showViewAndAnimation()
         startPlayMusic(musicName: "send_message")
         if deviceOldThan(device: 9) {
@@ -550,6 +560,7 @@ extension ZLRecordView {
     
     //1. recordMayCancel
     @objc func recordMayCancelRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
+      print("state\(state)")
         let touch = eventA.touches(for: senderA)?.first
         let curPoint = touch?.location(in: self)
         guard curPoint != nil else {
@@ -622,7 +633,7 @@ extension ZLRecordView {
             hideviewAndAnimation()
         }
     
-        let timeGap = curFinishDate.timeIntervalSince(startDate!)
+        let timeGap = curFinishDate.timeIntervalSince(curStartDate!)
         if timeGap < 2 {
             UIView.animate(withDuration: 1) {
                 self.showRightTipView()
