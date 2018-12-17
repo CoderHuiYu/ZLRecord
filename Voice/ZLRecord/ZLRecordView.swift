@@ -42,14 +42,12 @@ class ZLRecordView: UIView {
     fileprivate var docmentFilePath: String?
     fileprivate var recorder: AVAudioRecorder?
     fileprivate var playTime: Int = 0
-    
     var voiceData: NSData?
     weak var delegate: ZLRecordViewProtocol?
     var curStartDate : Date?
     var curFinishDate : Date = Date.init()
     var lastFinishDate :Date?
-    
-  
+
     private var state: State = .closed
     private var lastState : State?
     private var trackTouchPoint : CGPoint?
@@ -64,7 +62,7 @@ class ZLRecordView: UIView {
     private var isCanceled : Bool = false      //is canceled
     private var isFinished : Bool = false
     
-    //MARK: ============ init the view
+    //MARK: ================== lazy ==================
     lazy var placeholdLabel : UILabel = {
         let placeholdLabel = UILabel.init(frame: CGRect.init(x: 0, y: 0, width: 40, height: self.frame.height))
         placeholdLabel.backgroundColor = self.backgroundColor
@@ -91,8 +89,6 @@ class ZLRecordView: UIView {
         btn.layer.masksToBounds = true
         return btn
     }()
-    
-    
     
     lazy var recordButton: UIButton = {
         let recordButton = UIButton.init(frame: CGRect(x: frame.size.width-self.frame.size.height, y: 0, width: self.frame.size.height, height: self.frame.size.height))        
@@ -171,6 +167,23 @@ class ZLRecordView: UIView {
         return _beatImageView!
     }
     
+    lazy var garbageView : ZLGarbageView = {
+        let garbageView = ZLGarbageView.init(frame: CGRect.init(x: self.beatImageView.center.x - 15/2, y: kFloatGarbageBeginY, width: 30, height: self.frame.height))
+        garbageView.isHidden = true
+        return garbageView
+    }()
+    
+    lazy var lockView : ZLLockView = {
+        let lockView = ZLLockView.init(frame: CGRect.init(x: self.frame.size.width-kFloatLockViewWidth, y: 0, width: kFloatLockViewWidth, height: kFloatLockViewHeight))
+        lockView.backgroundColor = UIColor.white
+        lockView.layer.borderWidth = 1
+        lockView.layer.borderColor = UIColor.init(red: 200/255.0, green:  200/255.0, blue:  200/255.0, alpha: 1).cgColor
+        lockView.layer.cornerRadius = kFloatLockViewWidth / 2
+        lockView.layer.masksToBounds = true
+        lockView.isHidden = true
+        return lockView
+    }()
+    
     var shimmerView :ShimmeringView {
         if _shimmerView == nil {
             let textString = NSLocalizedString("ZL_SWIPE_TO_CANCEL", comment: "Swipe to cancel")
@@ -189,12 +202,6 @@ class ZLRecordView: UIView {
         return _shimmerView!
     }
     
-    lazy var garbageView : ZLGarbageView = {
-        let garbageView = ZLGarbageView.init(frame: CGRect.init(x: self.beatImageView.center.x - 15/2, y: kFloatGarbageBeginY, width: 30, height: self.frame.height))
-        garbageView.isHidden = true
-        return garbageView
-    }()
-    
     var timeLabel:UILabel {
         if  _timeLabel == nil {
             _timeLabel = UILabel.init(frame: CGRect.init(x: 45 , y: 0, width: 45, height: self.frame.height))
@@ -209,18 +216,7 @@ class ZLRecordView: UIView {
         return _timeLabel!
     }
     
-    lazy var lockView : ZLLockView = {
-        let lockView = ZLLockView.init(frame: CGRect.init(x: self.frame.size.width-kFloatLockViewWidth, y: 0, width: kFloatLockViewWidth, height: kFloatLockViewHeight))
-        lockView.backgroundColor = UIColor.white
-        lockView.layer.borderWidth = 1
-        lockView.layer.borderColor = UIColor.init(red: 200/255.0, green:  200/255.0, blue:  200/255.0, alpha: 1).cgColor
-        lockView.layer.cornerRadius = kFloatLockViewWidth / 2
-        lockView.layer.masksToBounds = true
-        lockView.isHidden = true
-        return lockView
-    }()
-    
-    //MARK: ================== init frame =======
+    //MARK: ================== init frame ==================
     override init(frame: CGRect) {
         super.init(frame: frame)
         isUserInteractionEnabled = true
@@ -249,17 +245,7 @@ class ZLRecordView: UIView {
         recordButton.addTarget(self, action: #selector(recordFinishRecordVoice), for: .touchUpOutside)
     }
     
-    @objc func cancelRecordVoice() {
-        sendButton.isUserInteractionEnabled = false
-        UIView.animate(withDuration: 1.0) {
-            self.cancelButton.alpha = 0
-            self.cancelButton.isHidden = true
-            self.sendButton.alpha = 0
-        }
-        recordCanceled()
-    }
-    
-    //MARK: ============ show view and animation
+    //MARK: ================== show view and animation ==================
     func showLockView()  {
         lockView.isHidden = false
         lockView.lockAnimationView.addAnimation()
@@ -346,7 +332,7 @@ class ZLRecordView: UIView {
             self.resetCancelStatusView()         
         }
     }
-    //MARK: ============== reset View ====
+    //MARK: ================== reset View ==================
     func resetLockView() {
         lockView.isHidden = true
         lockView.resetLockViewImageTint()
@@ -398,8 +384,44 @@ class ZLRecordView: UIView {
         resetCancelButton()
         resetRecordButtonTarget()
     }
+    //MARK: ================== timer‘s selector  ==================
+    @objc private func countVoiceTime(){
+        playTime = playTime + 1
+        recordIsRecordingVoice(playTime)
+        if playTime >= 60 {
+            recordFinishRecordVoice()
+        }
+    }
     
-    //MARK: ============ Actions
+    // is recording
+    func recordIsRecordingVoice(_ recordTime: Int) {
+        timeCount = recordTime
+        if (timeCount == 1){
+            showLockView()
+        }
+        if recordTime < 10 {
+            self.timeLabel.text = "0:0" + "\(recordTime)"
+        }else{
+            self.timeLabel.text = "0:" + "\(recordTime)"
+            
+            if recordTime >= 50 {
+                self.show("\(60 - recordTime)")
+            }
+        }
+    }
+    
+    //MARK: ================== Actions ==================
+    //when click  the cancelButton,the function excute
+    @objc func cancelRecordVoice() {
+        sendButton.isUserInteractionEnabled = false
+        UIView.animate(withDuration: 1.0) {
+            self.cancelButton.alpha = 0
+            self.cancelButton.isHidden = true
+            self.sendButton.alpha = 0
+        }
+        recordCanceled()
+    }
+    
     @objc func closeRightTipView() {
         if rightTipView.isHidden == false {
             UIView.animate(withDuration: 1) {
@@ -407,9 +429,12 @@ class ZLRecordView: UIView {
             }
         }
     }
+    @objc private func sendVoice(){
+        sendButton.isUserInteractionEnabled = false
+        recordFinishRecordVoice()
+    }
     
     func showRightTipView() {
-        
         if rightTipView.isHidden {
             self.rightTipView.isHidden = false
             self.rightTipView.alpha = 1
@@ -420,7 +445,6 @@ class ZLRecordView: UIView {
                     self.rightTipView.isHidden = true
                     self.rightTipView.alpha = 1
                 })
-                
             }
         }
     }
@@ -438,8 +462,8 @@ class ZLRecordView: UIView {
         AudioServicesDisposeSystemSoundID(sysID)
     }
     
-    
-    //MARK: ============ Tap RecordButton ---->  showView && hideView ============
+    //MARK: ============ Tap/release RecordButton will excute animation============
+    // showView With Animation && hideView With Animation/without animation
     func showViewAndAnimation() {
         if state == .closing {
             shimmerView.removeFromSuperview()
@@ -460,13 +484,13 @@ class ZLRecordView: UIView {
         beatImgViewNowFrame.origin.x = startPoint.x - (shimmerOrgFrame.minX - beatImgViewOrgFrame.maxX )
         shimmerView.frame = shimmerNowFrame
         beatImageView.frame = beatImgViewNowFrame
-        
         UIView.animate(withDuration: kFloatSliderShowTime, animations: {
             self.shimmerView.isHidden = false
             self.beatImageView.isHidden = false
             self.shimmerView.frame = shimmerOrgFrame
             self.beatImageView.frame = beatImgViewOrgFrame
         }) { (finished) in
+            //when the show animation finish,start to record
             if finished {
                 if self.state == .opening {
                     DispatchQueue.main.async {
@@ -523,7 +547,7 @@ class ZLRecordView: UIView {
 }
 
 extension ZLRecordView {
-    //MARK: ============ handle : click the recordButton and it's status  ============
+    //MARK: ============ handle : click/drag/release the recordButton ============
     //Start record
     @objc func recordStartRecordVoice(sender senderA: UIButton, event eventA: UIEvent) {
         curStartDate = Date.init()
@@ -556,6 +580,7 @@ extension ZLRecordView {
             zlSliderView.updateLocation(curPoint!.x - self.trackTouchPoint!.x)
             shimmerView.alpha = (kFloatCancelRecordingOffsetX - (firstTouchPoint!.x - trackTouchPoint!.x))/kFloatCancelRecordingOffsetX
         }
+        //Horizontal drag
         if (firstTouchPoint!.x - trackTouchPoint!.x) >= kFloatCancelRecordingOffsetX{
             if  timeCount >= 1{
                 isCanceled = true
@@ -573,6 +598,7 @@ extension ZLRecordView {
             trackTouchPoint = curPoint
             return
         }
+        //Vertical drag
         let changeY = trackTouchPoint!.y - curPoint!.y
         if changeY >= 0{
             var originFrame = self.lockView.frame
@@ -584,7 +610,6 @@ extension ZLRecordView {
             }else {
                 //lock animation
                 lockView.lockAnimationView.arrowImageView.alpha = 0
-                //                senderA.cancelTracking(with: eventA)
                 senderA.removeTarget(nil, action: nil, for: UIControl.Event.allEvents)
                 sendButton.isHidden = false
                 recordButton.isHidden = true
@@ -633,7 +658,7 @@ extension ZLRecordView {
         recordEnded()
     }
     
-    //MARK: ============ record status: 1.start 2.cancel 3.end
+    //MARK: ================== record status: start/cancel/end ==================
     func startRecord() {
         let audioSession = AVAudioSession.sharedInstance()
         do {
@@ -714,7 +739,6 @@ extension ZLRecordView {
     
     //ended record
     func recordEnded()  {
-        //        startPlayMusic(musicName: "send_message")
         if (playTimer != nil || recorder != nil) {
             recorder?.stop()
             playTimer?.invalidate()
@@ -722,42 +746,11 @@ extension ZLRecordView {
         }
         resetRecordButtonTarget()
         resetFinishStatusView()
-        
-    }
-    
-    //MARK: ============ handle recode voice && send voice
-    @objc private func sendVoice(){
-        sendButton.isUserInteractionEnabled = false
-        recordFinishRecordVoice()
-    }
-    
-    @objc private func countVoiceTime(){
-        playTime = playTime + 1
-        recordIsRecordingVoice(playTime)
-        if playTime >= 60 {
-            recordFinishRecordVoice()
-        }
-    }
-    
-    // is recording
-    func recordIsRecordingVoice(_ recordTime: Int) {
-        timeCount = recordTime
-        if (timeCount == 1){
-            showLockView()
-        }
-        if recordTime < 10 {
-            self.timeLabel.text = "0:0" + "\(recordTime)"
-        }else{
-            self.timeLabel.text = "0:" + "\(recordTime)"
-            
-            if recordTime >= 50 {
-                self.show("\(60 - recordTime)")
-            }
-        }
     }
 }
-
 extension ZLRecordView: AVAudioRecorderDelegate{
+    
+    // MARK:
     func startPlayMusic(musicName muscicName : String) {
         guard let path = Bundle.main.path(forResource: muscicName, ofType: "m4a") else {
             return
@@ -787,6 +780,8 @@ extension ZLRecordView: AVAudioRecorderDelegate{
         }
     }
 }
+
+// according the text length to calculate the width
 extension NSObject {
     func getStringWidth(string :String, font :UIFont) -> CGFloat {
         let attributes = [NSAttributedString.Key.font:font]
